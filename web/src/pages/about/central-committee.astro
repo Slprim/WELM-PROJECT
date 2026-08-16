@@ -1,0 +1,60 @@
+---
+import Base from "../../layouts/Base.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import { committee } from "../../data/about";
+
+/** Initials stand in until the client supplies portraits for each member. */
+const initials = (name: string) =>
+  name
+    .replace(/^(Dr\.|Pastor|Mrs|Mr\.?|Prophet)\s+/i, "")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("");
+---
+
+<Base
+  title="Central Committee"
+  description="The Central Committee is the governing body of Words of Eternal Life Ministries, constituted in 2019."
+>
+  <PageHeader
+    eyebrow="Central Committee"
+    title="The governing body of the ministry"
+    lede="Constituted in 2019 to oversee the work of the house."
+  />
+
+  <section class="section bg-sand-50">
+    <div class="shell">
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          committee.map((member, i) => (
+            <article
+              class="card flex items-center gap-5 p-7"
+              data-reveal="scale"
+              data-reveal-delay={
+                i % 3 === 1 ? "100" : i % 3 === 2 ? "180" : undefined
+              }
+            >
+              <span
+                class="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-navy-950 font-display text-xl font-light text-gold-400"
+                aria-hidden="true"
+              >
+                {initials(member.name)}
+              </span>
+              <div>
+                <h2 class="font-display text-xl font-light leading-snug text-navy-900">
+                  {member.name}
+                </h2>
+                <p class="mt-1 text-sm text-sand-500">{member.role}</p>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+
+      <p class="mt-14 max-w-2xl text-sm leading-relaxed text-sand-500">
+        Portraits will replace the initials once the ministry supplies them.
+      </p>
+    </div>
+  </section>
+</Base>

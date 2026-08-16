@@ -1,0 +1,96 @@
+---
+import Base from "../../layouts/Base.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import { mission } from "../../data/about";
+import { themes } from "../../data/site";
+---
+
+<Base
+  title="Mission & Vision"
+  description="Why Words of Eternal Life Ministries exists, where it is going, and the yearly themes the house has walked through."
+>
+  <PageHeader
+    eyebrow="Mission & Vision"
+    title="Why this house exists"
+  />
+
+  <section class="section bg-sand-50">
+    <div class="shell">
+      <div class="grid gap-px overflow-hidden rounded-3xl border border-sand-200 bg-sand-200 md:grid-cols-3">
+        {
+          [
+            ["Vision", mission.vision],
+            ["Mission", mission.statement],
+            ["Method", mission.method],
+          ].map(([label, value], i) => (
+            <div
+              class="bg-white p-9"
+              data-reveal
+              data-reveal-delay={
+                i === 1 ? "100" : i === 2 ? "180" : undefined
+              }
+            >
+              <p class="text-xs uppercase tracking-[0.2em] text-gold-800">
+                {label}
+              </p>
+              <p class="mt-5 font-display text-2xl font-light leading-snug text-navy-900">
+                {value}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+
+      <p
+        class="mx-auto mt-20 max-w-3xl text-center font-display text-display-md font-light italic leading-tight text-navy-900"
+        data-reveal="scale"
+      >
+        “{mission.tagline}”
+      </p>
+    </div>
+  </section>
+
+  {/* ================= YEARLY THEMES ================= */}
+  <section class="section bg-navy-950 text-white">
+    <div class="shell">
+      <p class="eyebrow text-gold-400" data-reveal>Yearly themes</p>
+      <h2
+        class="mt-7 max-w-2xl font-display text-display-lg font-light leading-[1.05] text-white"
+        data-reveal
+      >
+        The word over the house, year by year
+      </h2>
+
+      <div class="mt-14 grid gap-6 md:grid-cols-2">
+        {
+          themes.map((theme, i) => (
+            <article
+              class="rounded-3xl border border-white/10 bg-navy-900 p-9"
+              data-reveal="scale"
+              data-reveal-delay={i ? "100" : undefined}
+            >
+              <p class="font-display text-5xl font-light text-gold-500">
+                {theme.year}
+              </p>
+              <h3 class="mt-6 font-display text-2xl font-light leading-snug text-white">
+                {theme.title}
+              </h3>
+              {"subtitle" in theme && theme.subtitle && (
+                <p class="mt-2 text-white/60">{theme.subtitle}</p>
+              )}
+              {"scripture" in theme && theme.scripture && (
+                <p class="mt-4 text-sm italic text-gold-300">
+                  {theme.scripture}
+                </p>
+              )}
+            </article>
+          ))
+        }
+      </div>
+
+      <p class="mt-12 text-sm text-white/40">
+        Earlier and later themes will be added as the ministry supplies them.
+      </p>
+    </div>
+  </section>
+</Base>

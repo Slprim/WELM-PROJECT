@@ -1,0 +1,93 @@
+---
+import { Image } from "astro:assets";
+import Base from "../../layouts/Base.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import { pastor } from "../../data/about";
+import pastorImage from "../../assets/pastor-faith-joseph.jpg";
+
+const facts = [
+  ["Full name", pastor.fullName],
+  ["Born", pastor.born],
+  ["Spouse", pastor.spouse],
+  ["Occupation", pastor.occupation],
+  ["Education", pastor.education.join(" · ")],
+];
+---
+
+<Base
+  title="Pastor Faith Joseph"
+  description={`${pastor.knownAs} — ${pastor.summary}`}
+>
+  <PageHeader
+    eyebrow="Our leader"
+    title="Pastor Faith Joseph"
+    lede={pastor.summary}
+  />
+
+  <section class="section bg-sand-50">
+    <div class="shell">
+      <div class="grid gap-14 lg:grid-cols-12 lg:gap-20">
+        <div class="lg:col-span-5" data-reveal="scale">
+          <div class="relative lg:sticky lg:top-32">
+            <div
+              class="absolute -inset-5 -z-10 rounded-3xl border-2 border-gold-400/60"
+              aria-hidden="true"
+            >
+            </div>
+            <Image
+              src={pastorImage}
+              alt="Pastor Faith Joseph"
+              class="w-full rounded-2xl object-cover shadow-e3"
+              widths={[480, 760, 1100]}
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              loading="eager"
+            />
+          </div>
+        </div>
+
+        <div class="lg:col-span-7">
+          <h2
+            class="font-display text-display-md font-light leading-tight"
+            data-reveal="right"
+          >
+            Early life
+          </h2>
+          <p class="mt-6 text-lg leading-relaxed text-sand-600" data-reveal="right" data-reveal-delay="80">
+            {pastor.fullName} was born on {pastor.born.replace(", ", " in ")} to
+            {" "}{pastor.parents}. He attended Abuakwa State College and went on
+            to the University of Cape Coast, where he graduated in 2010. His
+            siblings are {pastor.siblings}.
+          </p>
+          <p class="mt-5 text-lg leading-relaxed text-sand-600" data-reveal="right" data-reveal-delay="160">
+            {pastor.summary}
+          </p>
+
+          <dl class="mt-14 grid gap-px overflow-hidden rounded-3xl border border-sand-200 bg-sand-200 sm:grid-cols-2">
+            {
+              facts.map(([label, value]) => (
+                <div class="bg-white p-6">
+                  <dt class="text-xs uppercase tracking-[0.18em] text-gold-800">
+                    {label}
+                  </dt>
+                  <dd class="mt-2 text-navy-900">{value}</dd>
+                </div>
+              ))
+            }
+          </dl>
+
+          {/* The legacy page carried two blocks of keyboard-mash placeholder
+              text where the rest of this biography should be. Saying so is
+              better than reprinting it or inventing a replacement. */}
+          <div
+            class="mt-10 rounded-2xl border border-sand-300 bg-sand-100 p-6 text-sm leading-relaxed text-sand-600"
+          >
+            <strong class="text-navy-900">Biography in progress.</strong>
+            The rest of this page — his call to ministry, his writing, and the
+            work of Faith Joseph Ministries — is still to be written. The
+            previous site had placeholder text in this space.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

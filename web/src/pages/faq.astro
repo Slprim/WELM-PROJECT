@@ -1,0 +1,135 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHeader from "../components/PageHeader.astro";
+import { site, services } from "../data/site";
+import { mission } from "../data/about";
+
+/**
+ * The legacy FAQ page was a maintenance notice, so there was nothing to
+ * carry over. Every answer below is built only from facts already
+ * established elsewhere on this site — service times, location, what the
+ * house believes, how giving works.
+ *
+ * Questions that would require inventing ministry policy (dress code,
+ * children's provision, membership process, baptism scheduling) are listed
+ * under `needsClient` instead of being answered with a guess.
+ */
+const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
+
+const faqs = [
+  {
+    q: "When and where do you meet?",
+    a: `${sunday.name} runs ${sunday.time} every Sunday at the ${site.address.street}, ${site.address.city}. There are also gatherings every weekday — the Declaration Hour at 5:00 am, Lunch Hour at noon and I AM GOD at 5:00 pm, all on Clubhouse.`,
+  },
+  {
+    q: "I have never been to a service before. What happens?",
+    a: "Sunday is a teaching service — worship, then the word, and prayer. You are welcome to come exactly as you are, sit wherever you like, and leave whenever you need to. Nobody will single you out.",
+  },
+  {
+    q: "Can I join online instead?",
+    a: "Yes. Sunday services stream on the ministry's YouTube channel, and the daily gatherings run on Clubhouse. The Live page has everything in one place.",
+  },
+  {
+    q: "What does this church believe?",
+    a: `The house holds to ten articles of faith, each anchored in scripture — from the authority of the Bible through to healing, baptism and prosperity. The full statement is published on this site. The mission is simply "${mission.statement.toLowerCase()}".`,
+  },
+  {
+    q: "How do I give?",
+    a: "Giving will be available by mobile money — MTN MoMo, Telecel Cash and AT Money — as well as by card and bank transfer, through Paystack. You can also give in person at any gathering.",
+  },
+  {
+    q: "Can I request prayer?",
+    a: "Yes. Send a prayer request through the contact page and it goes to the pastoral team. Requests are treated as private.",
+  },
+  {
+    q: "Who leads the ministry?",
+    a: "Dr. Faith Joseph founded the ministry and serves as its head pastor and President of the Central Committee — the governing body constituted in 2019. The full committee is listed on this site.",
+  },
+  {
+    q: "How do I get in touch?",
+    a: `Call ${site.phones.join(" or ")}, email ${site.email}, or use the contact form.`,
+  },
+];
+
+/** Deliberately unanswered — these need the ministry's own policy. */
+const needsClient = [
+  "Is there provision for children during the service?",
+  "How do I become a member?",
+  "How do I get baptised?",
+  "Is there parking at the venue?",
+  "How do I join a department or serve?",
+];
+---
+
+<Base
+  title="FAQs"
+  description={`Common questions about visiting ${site.legalName} — service times, location, what to expect, giving and prayer.`}
+>
+  <PageHeader
+    eyebrow="FAQs"
+    title="Questions people ask"
+    lede="If your question is not here, the contact page will reach a real person."
+  />
+
+  <section class="section bg-sand-50">
+    <div class="shell">
+      <div class="mx-auto max-w-3xl">
+        <div class="divide-y divide-sand-200 overflow-hidden rounded-3xl border border-sand-200 bg-white">
+          {
+            faqs.map((faq, i) => (
+              <details class="faq group" name="faq" open={i === 0}>
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-6 p-7 text-left">
+                  <h2 class="font-display text-xl font-light leading-snug text-navy-900">
+                    {faq.q}
+                  </h2>
+                  <span
+                    class="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-sand-300 text-gold-800 transition group-open:rotate-45 group-open:border-gold-500"
+                    aria-hidden="true"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </span>
+                </summary>
+                <p class="px-7 pb-7 leading-relaxed text-sand-600">{faq.a}</p>
+              </details>
+            ))
+          }
+        </div>
+
+        {/* Naming the gaps beats answering them wrongly. */}
+        <div class="mt-12 rounded-3xl border border-sand-300 bg-sand-100 p-8">
+          <h2 class="font-display text-2xl font-light text-navy-900">
+            Still to be answered
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-sand-600">
+            These come up often, but answering them means stating ministry
+            policy — so they are waiting on the client rather than being
+            guessed at.
+          </p>
+          <ul class="mt-6 space-y-2 text-sm text-sand-600">
+            {needsClient.map((q) => (
+              <li class="flex gap-3">
+                <span class="mt-2 h-1 w-1 shrink-0 rounded-full bg-gold-500" aria-hidden="true" />
+                {q}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="mt-12 text-center">
+          <a href="/contact" class="btn-navy">Ask us something else</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary:hover h2 {
+    color: var(--color-gold-800);
+  }
+</style>

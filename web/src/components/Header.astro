@@ -20,7 +20,9 @@ const isActive = (href: string) =>
     <div class="shell flex h-10 items-center justify-between text-xs">
       <div class="flex items-center gap-6 text-white/60">
         <a href="/faq" class="transition hover:text-gold-400">FAQs</a>
-        <a href="/help" class="transition hover:text-gold-400">Help</a>
+        {/* The legacy Help page held nothing but a phone number, so it is
+            folded into Contact rather than kept as its own route. */}
+        <a href="/contact" class="transition hover:text-gold-400">Help</a>
         <a
           href={`mailto:${site.email}`}
           class="hidden transition hover:text-gold-400 xl:inline"
