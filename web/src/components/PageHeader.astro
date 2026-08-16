@@ -1,0 +1,44 @@
+---
+/**
+ * Shared inner-page header. The hero carousel is the homepage's own thing;
+ * every other page opens with this so the nav always has a dark band to sit
+ * against and the pages share one rhythm.
+ */
+interface Props {
+  eyebrow: string;
+  title: string;
+  lede?: string;
+}
+const { eyebrow, title, lede } = Astro.props;
+---
+
+<section class="relative isolate overflow-hidden bg-navy-950">
+  <div
+    class="absolute inset-0 -z-10 opacity-[0.18]"
+    style="background-image: radial-gradient(circle at 12% 20%, #dfb163 0, transparent 45%), radial-gradient(circle at 88% 90%, #001870 0, transparent 45%);"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="shell pb-20 pt-40 sm:pb-24 sm:pt-44">
+    <p class="eyebrow text-gold-400" data-reveal>{eyebrow}</p>
+    <h1
+      class="mt-7 max-w-4xl font-display text-display-xl font-light leading-[0.95] text-white"
+      data-reveal
+      data-reveal-delay="80"
+    >
+      {title}
+    </h1>
+    {
+      lede && (
+        <p
+          class="mt-8 max-w-xl text-lg leading-relaxed text-white/70"
+          data-reveal
+          data-reveal-delay="160"
+        >
+          {lede}
+        </p>
+      )
+    }
+  </div>
+</section>

@@ -256,7 +256,12 @@ const isActive = (href: string) =>
     const update = () => {
       const scrolled = window.scrollY > 24;
       header.dataset.atTop = String(!scrolled);
+      // `bg-transparent` has to come off as `bg-navy-950/95` goes on. Both
+      // are utilities of equal specificity, so leaving both applied lets
+      // stylesheet order decide — and transparent was winning, which left
+      // the nav unreadable over light sections.
       bar.classList.toggle("bg-navy-950/95", scrolled);
+      bar.classList.toggle("bg-transparent", !scrolled);
       bar.classList.toggle("backdrop-blur-md", scrolled);
       bar.classList.toggle("border-white/10", scrolled);
       bar.classList.toggle("border-transparent", !scrolled);

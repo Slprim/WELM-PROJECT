@@ -15,9 +15,11 @@ export const site = {
   description:
     "Words of Eternal Life Ministries (Kingdom of Gods) — a church in Accra, Ghana building believers into the fullness of Christ through teaching, prayer and community.",
   email: "wordsofeternalifemin@gmail.com",
-  // NOTE: the legacy site shipped the placeholder "+012 345 6789". Left blank
-  // deliberately rather than publishing a fake number — needs the real one.
-  phone: "",
+  // The legacy site shipped the placeholder "+012 345 6789". These are the
+  // real enquiry lines, taken from the ministry's own event artwork
+  // (img/Prgrms/Pro&Power Conf.jpg and img/Themes/Year/Theme 2023.jpg).
+  // Worth confirming with the client that both are still in service.
+  phones: ["0545195648", "0549480591"],
   address: {
     street: "Cambridge Centre of Excellence, Dzorwulu",
     city: "Accra",
@@ -30,7 +32,36 @@ export const site = {
     instagram: "https://www.instagram.com/w_e_l_m/",
     youtube: "https://www.youtube.com/@gracewordtv",
   },
+  /**
+   * The ministry's own artwork bills him as "Prophet Dr. Faith Joseph" and
+   * "Lead Pastor"; the legacy site said only "Pst. Faith Joseph". Using the
+   * fuller title, but worth confirming which he prefers on the website.
+   */
+  leader: {
+    name: "Dr. Faith Joseph",
+    title: "Lead Pastor",
+    honorific: "Prophet",
+  },
+  /** Channels behind the two embeds on the legacy LiveStream page. */
+  youtubeChannels: {
+    primary: "UCylwhCv0356yu2sIpuBwIYQ",
+    secondary: "UCxlvklqt9K0AMb4NV18jGsA",
+  },
 } as const;
+
+/** Yearly themes, transcribed from the ministry's own theme artwork. */
+export const themes = [
+  {
+    year: 2023,
+    title: "Walking In Great Prosperity And Wealth",
+    scripture: "Isaiah 60:1–22",
+  },
+  {
+    year: 2022,
+    title: "Winning Souls",
+    subtitle: "Grace Upon Grace",
+  },
+] as const;
 
 export type NavItem = {
   label: string;

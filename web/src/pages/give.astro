@@ -1,0 +1,382 @@
+---
+import Base from "../layouts/Base.astro";
+import PageHeader from "../components/PageHeader.astro";
+import { site } from "../data/site";
+
+/**
+ * Giving page, built Paystack-ready.
+ *
+ * Paystack's secret key must never reach the browser, so the button posts to
+ * a serverless function (`/api/paystack/initialize`) which creates the
+ * transaction and returns an authorization URL to redirect to. Until that
+ * function and the client's Paystack account exist, the form is disabled
+ * and says so — it does not pretend to take money.
+ *
+ * The legacy page shipped a commented-out form collecting raw card numbers,
+ * expiry and CVV. That is deliberately not carried over: card data should
+ * never touch this site. Paystack's hosted checkout keeps it out of scope.
+ */
+
+const funds = [
+  { id: "tithe", label: "Tithe", note: "The tenth, as unto the Lord." },
+  { id: "offering", label: "Offering", note: "Weekly and thanksgiving offerings." },
+  { id: "metadidomi", label: "Metadidomi", note: "The monthly giving service." },
+  { id: "missions", label: "Missions & outreach", note: "Taking the word beyond the house." },
+  { id: "building", label: "Building fund", note: "Toward the house itself." },
+];
+
+const amounts = [50, 100, 200, 500, 1000];
+
+const PAYSTACK_READY = false;
+---
+
+<Base
+  title="Give"
+  description={`Give to ${site.legalName} by mobile money or card. Tithes, offerings, Metadidomi, missions and the building fund.`}
+>
+  <PageHeader
+    eyebrow="Metadidomi"
+    title="Every seed sown here goes somewhere"
+    lede="Your giving funds the teaching, the outreach and the running of the house. Give once, or set up a standing gift."
+  />
+
+  <section class="section bg-sand-50">
+    <div class="shell">
+      <div class="grid gap-14 lg:grid-cols-12 lg:gap-20">
+        {/* ============================ FORM ============================ */}
+        <div class="lg:col-span-7">
+          <form
+            class="rounded-3xl border border-sand-200 bg-white p-8 shadow-e2 sm:p-10"
+            data-give-form
+            novalidate
+          >
+            {
+              !PAYSTACK_READY && (
+                <div
+                  class="mb-9 rounded-2xl border border-gold-300 bg-gold-50 p-5 text-sm leading-relaxed text-gold-900"
+                  role="status"
+                >
+                  <strong class="block text-navy-900">
+                    Not yet taking payments
+                  </strong>
+                  This is the finished giving flow, waiting on the ministry's
+                  Paystack account. Once the account is approved and the keys
+                  are set, this form goes live without any redesign.
+                </div>
+              )
+            }
+
+            <!-- Fund -->
+            <fieldset>
+              <legend class="font-display text-2xl font-light text-navy-900">
+                What are you giving toward?
+              </legend>
+              <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                {
+                  funds.map((fund, i) => (
+                    <label
+                      class="give-option group flex cursor-pointer items-start gap-3 rounded-2xl border border-sand-200 p-4 transition hover:border-gold-400"
+                      for={`fund-${fund.id}`}
+                    >
+                      <input
+                        type="radio"
+                        name="fund"
+                        id={`fund-${fund.id}`}
+                        value={fund.id}
+                        checked={i === 0}
+                        class="mt-1 h-4 w-4 shrink-0 accent-gold-600"
+                      />
+                      <span>
+                        <span class="block text-sm font-semibold text-navy-900">
+                          {fund.label}
+                        </span>
+                        <span class="mt-0.5 block text-xs text-sand-500">
+                          {fund.note}
+                        </span>
+                      </span>
+                    </label>
+                  ))
+                }
+              </div>
+            </fieldset>
+
+            <!-- Amount -->
+            <fieldset class="mt-10">
+              <legend class="font-display text-2xl font-light text-navy-900">
+                How much?
+              </legend>
+              <p class="mt-2 text-sm text-sand-500">Amounts in Ghana cedis (GHS).</p>
+
+              <div class="mt-6 flex flex-wrap gap-3">
+                {
+                  amounts.map((amount) => (
+                    <button
+                      type="button"
+                      class="amount-chip rounded-full border border-sand-300 px-6 py-2.5 text-sm font-semibold text-navy-900 transition hover:border-gold-500"
+                      data-amount={amount}
+                      aria-pressed="false"
+                    >
+                      ₵{amount}
+                    </button>
+                  ))
+                }
+              </div>
+
+              <div class="mt-5">
+                <label
+                  for="custom-amount"
+                  class="block text-sm font-medium text-navy-900"
+                >
+                  Or enter another amount
+                </label>
+                <div class="relative mt-2">
+                  <span
+                    class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-sand-500"
+                    aria-hidden="true"
+                  >
+                    ₵
+                  </span>
+                  <input
+                    id="custom-amount"
+                    name="amount"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    inputmode="decimal"
+                    placeholder="0.00"
+                    class="w-full rounded-full border border-sand-300 py-3 pl-10 pr-5 text-navy-900 focus:border-gold-600 focus:outline-none"
+                    data-custom-amount
+                  />
+                </div>
+                <p
+                  class="mt-2 hidden text-sm text-red-700"
+                  data-amount-error
+                  role="alert"
+                >
+                  Please enter an amount greater than zero.
+                </p>
+              </div>
+            </fieldset>
+
+            <!-- Giver -->
+            <fieldset class="mt-10">
+              <legend class="font-display text-2xl font-light text-navy-900">
+                Your details
+              </legend>
+              <p class="mt-2 text-sm text-sand-500">
+                We only need an email to send your receipt.
+              </p>
+
+              <div class="mt-6 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="giver-name" class="block text-sm font-medium text-navy-900">
+                    Full name <span class="text-sand-400">(optional)</span>
+                  </label>
+                  <input
+                    id="giver-name"
+                    name="name"
+                    type="text"
+                    autocomplete="name"
+                    class="mt-2 w-full rounded-full border border-sand-300 px-5 py-3 text-navy-900 focus:border-gold-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label for="giver-email" class="block text-sm font-medium text-navy-900">
+                    Email
+                  </label>
+                  <input
+                    id="giver-email"
+                    name="email"
+                    type="email"
+                    required
+                    autocomplete="email"
+                    class="mt-2 w-full rounded-full border border-sand-300 px-5 py-3 text-navy-900 focus:border-gold-600 focus:outline-none"
+                  />
+                  <p
+                    class="mt-2 hidden text-sm text-red-700"
+                    data-email-error
+                    role="alert"
+                  >
+                    Please enter a valid email address for your receipt.
+                  </p>
+                </div>
+              </div>
+
+              <label class="mt-5 flex cursor-pointer items-start gap-3" for="recurring">
+                <input
+                  id="recurring"
+                  name="recurring"
+                  type="checkbox"
+                  class="mt-1 h-4 w-4 accent-gold-600"
+                />
+                <span class="text-sm text-sand-600">
+                  Make this a monthly gift
+                </span>
+              </label>
+            </fieldset>
+
+            <button
+              type="submit"
+              class="btn-gold mt-10 w-full !py-4 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!PAYSTACK_READY}
+              data-give-submit
+            >
+              {PAYSTACK_READY ? "Continue to payment" : "Giving opens soon"}
+            </button>
+
+            <p class="mt-5 text-center text-xs leading-relaxed text-sand-500">
+              Payments are processed by Paystack. Your card or mobile money
+              details are entered on Paystack's secure page and never touch
+              this website.
+            </p>
+          </form>
+        </div>
+
+        {/* ============================ ASIDE ============================ */}
+        <aside class="lg:col-span-5">
+          <div class="rounded-3xl bg-navy-950 p-8 text-white sm:p-10" data-reveal="right">
+            <p class="eyebrow text-gold-400">Ways to give</p>
+            <h2 class="mt-6 font-display text-3xl font-light text-white">
+              Mobile money or card
+            </h2>
+            <p class="mt-4 leading-relaxed text-white/70">
+              Paystack accepts MTN Mobile Money, Telecel Cash, AT Money and
+              all major cards — so most people can give straight from their
+              phone without a bank card at all.
+            </p>
+
+            <ul class="mt-9 space-y-5">
+              {
+                [
+                  ["Mobile money", "MTN MoMo, Telecel Cash, AT Money"],
+                  ["Cards", "Visa, Mastercard, Verve"],
+                  ["Bank transfer", "Available at checkout"],
+                ].map(([label, detail]) => (
+                  <li class="flex items-start gap-4 border-b border-white/10 pb-5 last:border-0 last:pb-0">
+                    <span
+                      class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-500"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      <span class="block text-sm font-semibold">{label}</span>
+                      <span class="mt-1 block text-sm text-white/60">
+                        {detail}
+                      </span>
+                    </span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <div class="mt-6 rounded-3xl border border-sand-200 bg-white p-8" data-reveal="right" data-reveal-delay="100">
+            <h3 class="font-display text-2xl font-light text-navy-900">
+              Give in person
+            </h3>
+            <p class="mt-4 text-sm leading-relaxed text-sand-600">
+              You are always welcome to give at any gathering, or to speak to
+              the finance team about a standing order.
+            </p>
+            <div class="mt-6 space-y-3 text-sm">
+              <a
+                href={site.address.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="block text-navy-900 transition hover:text-gold-800"
+              >
+                {site.address.street}
+                <span class="block text-sand-500">
+                  {site.address.city}, {site.address.country}
+                </span>
+              </a>
+              {
+                site.phones.map((phone) => (
+                  <a
+                    href={`tel:${phone}`}
+                    class="block text-navy-900 transition hover:text-gold-800"
+                  >
+                    {phone}
+                  </a>
+                ))
+              }
+              <a
+                href={`mailto:${site.email}`}
+                class="block break-all text-navy-900 transition hover:text-gold-800"
+              >
+                {site.email}
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-give-form]");
+
+  if (form) {
+    const chips = Array.from(
+      form.querySelectorAll<HTMLButtonElement>(".amount-chip"),
+    );
+    const custom = form.querySelector<HTMLInputElement>("[data-custom-amount]");
+    const email = form.querySelector<HTMLInputElement>("#giver-email");
+    const amountError = form.querySelector("[data-amount-error]");
+    const emailError = form.querySelector("[data-email-error]");
+
+    // Preset chips and the free-text field are two views of one value, so
+    // touching either has to clear the other.
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        chips.forEach((c) =>
+          c.setAttribute("aria-pressed", String(c === chip)),
+        );
+        if (custom) custom.value = chip.dataset.amount ?? "";
+        amountError?.classList.add("hidden");
+      });
+    });
+
+    custom?.addEventListener("input", () => {
+      chips.forEach((c) => c.setAttribute("aria-pressed", "false"));
+      amountError?.classList.add("hidden");
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const amount = Number(custom?.value ?? 0);
+      const emailValue = email?.value.trim() ?? "";
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+      let ok = true;
+
+      if (!(amount > 0)) {
+        amountError?.classList.remove("hidden");
+        custom?.focus();
+        ok = false;
+      }
+      if (!emailOk) {
+        emailError?.classList.remove("hidden");
+        if (ok) email?.focus();
+        ok = false;
+      }
+      if (!ok) return;
+
+      // Phase 4 wires this to POST /api/paystack/initialize, which creates
+      // the transaction server-side and returns an authorization_url to
+      // redirect to. Nothing here ever handles card details.
+    });
+  }
+</script>
+
+<style>
+  .give-option:has(input:checked) {
+    border-color: var(--color-gold-500);
+    background-color: var(--color-gold-50);
+  }
+  .amount-chip[aria-pressed="true"] {
+    background-color: var(--color-navy-900);
+    border-color: var(--color-navy-900);
+    color: white;
+  }
+</style>
