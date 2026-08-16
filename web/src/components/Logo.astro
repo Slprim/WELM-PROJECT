@@ -1,10 +1,9 @@
 ---
-import LogoMark from "../assets/logo-mark.svg";
-
 /**
- * The crown-and-sword mark, inlined via Astro's SVG import so it inherits
- * `currentColor` — gold on navy in the header, navy on paper elsewhere,
- * from one file.
+ * The crown-and-sword mark. Renders a reference to the <symbol> that
+ * LogoSymbol.astro defines once per document, so the path data is not
+ * repeated at each usage. Inherits `currentColor` — gold on navy in the
+ * header, navy on paper elsewhere, from one definition.
  */
 interface Props {
   class?: string;
@@ -18,10 +17,13 @@ const { class: className = "", withWordmark = true } = Astro.props;
   class:list={["group inline-flex items-center gap-3", className]}
   aria-label="Kingdom of Gods — Words of Eternal Life Ministries, home"
 >
-  <LogoMark
+  <svg
     class="h-11 w-11 shrink-0 text-gold-500 transition-transform duration-300 group-hover:scale-105"
     aria-hidden="true"
-  />
+    focusable="false"
+  >
+    <use href="#logo-mark"></use>
+  </svg>
 
   {
     withWordmark && (

@@ -1,0 +1,18 @@
+---
+import rawMark from "../assets/logo-mark.svg?raw";
+
+/**
+ * Defines the crown mark once per document as an SVG <symbol>.
+ *
+ * The mark is a potrace-traced file with ~7KB of path data. Inlining it at
+ * each of its three usages (header, mobile drawer, footer) tripled that on
+ * every page; referencing one symbol with <use> pays for it once.
+ * Same-document <use> still resolves `currentColor` against the referencing
+ * element, so the mark stays recolourable.
+ */
+const inner = rawMark.replace(/^[\s\S]*?<svg[^>]*>/i, "").replace(/<\/svg>\s*$/i, "");
+---
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="logo-mark" viewBox="0 0 300 300" set:html={inner} />
+</svg>
