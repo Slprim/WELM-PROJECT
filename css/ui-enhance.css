@@ -1,0 +1,1150 @@
+@charset "UTF-8";
+/* ============================================================================
+   W.E.L.M — UI Enhancement Layer
+   Loaded AFTER css/style.css. Presentation only: no markup, copy, or
+   behaviour is assumed. Remove the <link> to this file to revert everything.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. DESIGN TOKENS
+   The original palette mixed a warm gold (#DFB163) with a cool near-black
+   (#252531), a cool blue-white (#F3F6FF) and a saturated cyan (#3fade8).
+   Four directions at once. Everything below pulls to a single warm family
+   with gold as the one accent.
+   ------------------------------------------------------------------------ */
+:root {
+  /* Accent — gold, unchanged as the brand colour */
+  --welm-gold: #dfb163;
+  --welm-gold-soft: #ecd0a0;
+  --welm-gold-deep: #b98f45;
+  /* Readable gold for small text on light surfaces. #DFB163 on white is a
+     2.0:1 contrast ratio and fails WCAG; this passes AA at body sizes. */
+  --welm-gold-ink: #8a6320;
+
+  /* Neutrals — one warm gray family, no cool/warm mixing */
+  --welm-ink: #1b1815;
+  --welm-ink-2: #2a2621;
+  --welm-ink-3: #4a443c;
+  --welm-muted: #6f675c;
+  --welm-line: #e6dfd4;
+  --welm-cream: #faf7f2;
+  --welm-paper: #ffffff;
+
+  /* Shadows — tinted with the ink hue, single light source from above */
+  --welm-sh-1: 0 1px 2px rgba(27, 24, 21, 0.05), 0 2px 8px rgba(27, 24, 21, 0.05);
+  --welm-sh-2: 0 2px 4px rgba(27, 24, 21, 0.05), 0 8px 22px rgba(27, 24, 21, 0.08);
+  --welm-sh-3: 0 4px 8px rgba(27, 24, 21, 0.06), 0 18px 44px rgba(27, 24, 21, 0.12);
+  --welm-sh-gold: 0 6px 20px rgba(185, 143, 69, 0.28);
+
+  /* Type — a classical Garamond for display: elegant and timeless rather
+     than characterful. Montserrat carries all UI and body copy. */
+  --welm-display: "Cormorant Garamond", "EB Garamond", Garamond, Georgia, serif;
+  --welm-sans: "Montserrat", system-ui, -apple-system, sans-serif;
+
+  /* Motion */
+  --welm-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --welm-fast: 180ms;
+  --welm-base: 280ms;
+
+  /* Radii — softer on containers, tighter on inner elements */
+  --welm-r-sm: 4px;
+  --welm-r-md: 10px;
+  --welm-r-lg: 18px;
+
+  /* z-index scale, replacing the ad-hoc 9 / 11 / 9999 values */
+  --welm-z-base: 1;
+  --welm-z-nav: 100;
+  --welm-z-float: 200;
+  --welm-z-modal: 1050;
+}
+
+/* ---------------------------------------------------------------------------
+   2. BASE
+   ------------------------------------------------------------------------ */
+html {
+  scroll-behavior: smooth;
+  /* the sticky navbar would otherwise cover anchor targets */
+  scroll-padding-top: 96px;
+}
+/* Deliberately no `overflow-x: hidden/clip` here. Both would hide the symptom
+   of a too-wide element by cutting the content off the side of the screen,
+   and `hidden` additionally breaks `position: sticky` on the navbar. The
+   width guards below address the causes instead. */
+
+body {
+  font-family: var(--welm-sans);
+  color: var(--welm-ink-3);
+  background-color: var(--welm-paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Retune the two Bootstrap surface utilities so light sections read as warm
+   paper rather than cool blue-white. */
+.bg-light {
+  background-color: var(--welm-cream) !important;
+}
+.bg-dark {
+  background-color: var(--welm-ink) !important;
+}
+.bg-secondary {
+  background-color: var(--welm-ink-2) !important;
+}
+
+/* Several images carry fixed `height`/`width` attributes with no upper bound,
+   which pushed the page wider than the viewport on phones. Embedded media
+   gets the same treatment — the blog modals use full-width iframes. */
+img,
+video,
+iframe,
+embed,
+object {
+  max-width: 100%;
+}
+
+/* Bootstrap rows use -15px side margins and expect a padded container to
+   absorb them. This page nests rows inside unpadded wrappers in a few
+   places, where the negative margin escapes and widens the document. */
+.container-fluid.p-0 > .row,
+.container78 > .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+::selection {
+  background: var(--welm-gold);
+  color: var(--welm-ink);
+}
+
+/* Keyboard focus was invisible everywhere. This is the accessibility floor. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--welm-gold);
+  outline-offset: 3px;
+  border-radius: var(--welm-r-sm);
+}
+
+/* Skip link for keyboard users — hidden until focused. */
+.welm-skip {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  z-index: var(--welm-z-modal);
+  padding: 12px 20px;
+  background: var(--welm-gold);
+  color: var(--welm-ink);
+  font-weight: 600;
+  border-radius: 0 0 var(--welm-r-md) var(--welm-r-md);
+  transition: top var(--welm-fast) var(--welm-ease);
+}
+.welm-skip:focus {
+  top: 0;
+  color: var(--welm-ink);
+  text-decoration: none;
+}
+
+/* Warm scrollbar so the chrome matches the page */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--welm-cream);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cfc5b5;
+    border-radius: 99px;
+    border: 3px solid var(--welm-cream);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--welm-gold-deep);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   3. TYPOGRAPHY
+   A serif display face carries the weight the old all-Montserrat setting
+   could not. Sizes are fluid so nothing needs a breakpoint to look right.
+   ------------------------------------------------------------------------ */
+/* Garamond sits small on the em and has generous natural sidebearings, so it
+   wants larger sizes and near-neutral tracking — negative tracking would
+   crowd it and lose the elegance. */
+h1, h2, h3, .display-1, .display-2, .display-3, .display-4 {
+  font-family: var(--welm-display);
+  font-optical-sizing: auto;
+  color: var(--welm-ink);
+  letter-spacing: 0;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+
+h4, h5, h6 {
+  font-family: var(--welm-sans);
+  color: var(--welm-ink-2);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(2.35rem, 1.55rem + 3.1vw, 3.9rem); font-weight: 600 !important; }
+h2 { font-size: clamp(2rem, 1.45rem + 2.2vw, 3.1rem); font-weight: 600 !important; }
+h3 { font-size: clamp(1.65rem, 1.32rem + 1.35vw, 2.4rem); font-weight: 600 !important; }
+h4 { font-size: clamp(1.15rem, 1.03rem + 0.5vw, 1.4rem); font-weight: 600 !important; }
+h5 { font-size: clamp(1rem, 0.95rem + 0.25vw, 1.15rem); font-weight: 600 !important; }
+h6 { font-size: 0.95rem; font-weight: 600 !important; }
+
+.display-1, .display-2, .display-3, .display-4 {
+  font-weight: 600 !important;
+  letter-spacing: 0;
+}
+.display-3 {
+  font-size: clamp(2.8rem, 1.8rem + 4.2vw, 5rem);
+}
+
+p {
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+/* Hold body copy near a 65-character measure. Scoped away from grid columns
+   and overlay captions so it cannot narrow a layout that relies on width. */
+.container p:not([class*="col-"]):not(.m-0):not(.mb-0) {
+  max-width: 68ch;
+}
+
+/* The uppercase gold eyebrow above most section titles. It was set in
+   #DFB163 on white — unreadable. Darkened and given real tracking. */
+.text-primary.text-uppercase,
+h6.text-uppercase {
+  color: var(--welm-gold-ink) !important;
+  font-family: var(--welm-sans);
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em;
+}
+
+/* `.c-cyan` was a lone #3fade8 fighting the gold on every section heading.
+   Remapping it to warm ink keeps gold as the single accent. To restore the
+   original blue, delete this rule. */
+.c-cyan {
+  color: var(--welm-ink) !important;
+}
+
+/* `.c-white` and `.newfont` are used in the markup but were never defined. */
+.c-white {
+  color: var(--welm-paper) !important;
+}
+.newfont {
+  font-family: var(--welm-display);
+}
+
+/* ---------------------------------------------------------------------------
+   4. SECTION TITLES
+   `.section-title` had a 45x3px gold bar. `.section-title2` is used just as
+   often in the markup but was never defined at all — those headings had no
+   accent. Both are handled here.
+   ------------------------------------------------------------------------ */
+.section-title {
+  padding-left: 68px;
+}
+.section-title::before {
+  top: 0.55em;
+  width: 52px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--welm-gold) 0%, rgba(223, 177, 99, 0) 100%);
+}
+
+.section-title2 {
+  position: relative;
+  padding-top: 20px;
+}
+.section-title2::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 52px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--welm-gold) 0%, rgba(223, 177, 99, 0) 100%);
+}
+
+/* ---------------------------------------------------------------------------
+   5. TOPBAR + NAVBAR
+   ------------------------------------------------------------------------ */
+body > .container-fluid.bg-dark.py-3:first-of-type {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+  border-bottom: 1px solid rgba(223, 177, 99, 0.14);
+}
+
+body > .container-fluid.bg-dark.py-3:first-of-type a {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  transition: color var(--welm-fast) var(--welm-ease);
+}
+body > .container-fluid.bg-dark.py-3:first-of-type a:hover {
+  color: var(--welm-gold) !important;
+  text-decoration: none;
+}
+
+/* The nav-bar wrapper drew a hard half-dark/half-white split behind the bar.
+   Replaced with a clean single surface. */
+.nav-bar::before {
+  background: var(--welm-ink);
+}
+.nav-bar::after {
+  background: var(--welm-paper);
+}
+
+.navbar.bg-secondary {
+  background: var(--welm-ink-2) !important;
+  border-radius: var(--welm-r-md) var(--welm-r-md) 0 0;
+  box-shadow: var(--welm-sh-2);
+}
+
+.navbar-brand img {
+  border-radius: var(--welm-r-md) !important;
+  transition: transform var(--welm-base) var(--welm-ease);
+}
+.navbar-brand:hover img {
+  transform: scale(1.04);
+}
+
+/* Nav links: animated gold underline instead of a bare colour swap. */
+.navbar-dark .navbar-nav .nav-link {
+  position: relative;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.82);
+  transition: color var(--welm-fast) var(--welm-ease);
+}
+.navbar-dark .navbar-nav .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  bottom: 22px;
+  height: 2px;
+  background: var(--welm-gold);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--welm-base) var(--welm-ease);
+}
+.navbar-dark .navbar-nav .nav-link:hover::after,
+.navbar-dark .navbar-nav .nav-link.active::after {
+  transform: scaleX(1);
+}
+.navbar-dark .navbar-nav .nav-link.active {
+  color: var(--welm-gold);
+}
+
+.navbar-toggler {
+  border-color: rgba(223, 177, 99, 0.4);
+  border-radius: var(--welm-r-sm);
+  padding: 0.4rem 0.6rem;
+}
+
+/* Dropdown */
+.navbar .dropdown-menu {
+  border: 1px solid var(--welm-line);
+  border-top: 2px solid var(--welm-gold);
+  border-radius: 0 0 var(--welm-r-md) var(--welm-r-md) !important;
+  box-shadow: var(--welm-sh-3);
+  padding: 0.4rem 0;
+  overflow: hidden;
+}
+.navbar .dropdown-item {
+  font-size: 0.88rem;
+  padding: 0.6rem 1.2rem;
+  color: var(--welm-ink-3);
+  transition: background var(--welm-fast) var(--welm-ease),
+              color var(--welm-fast) var(--welm-ease),
+              padding-left var(--welm-fast) var(--welm-ease);
+}
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+  background: var(--welm-cream);
+  color: var(--welm-ink);
+  padding-left: 1.5rem;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-dark .navbar-nav .nav-link::after {
+    bottom: 6px;
+  }
+  .navbar.bg-secondary {
+    border-radius: var(--welm-r-md);
+  }
+}
+
+/* Sticky nav — the `welm-stuck` class is applied by js/ui-enhance.js. */
+.nav-bar.welm-stuck {
+  position: sticky;
+  top: 0;
+  z-index: var(--welm-z-nav);
+}
+.nav-bar.welm-stuck::before,
+.nav-bar.welm-stuck::after {
+  display: none;
+}
+.nav-bar.welm-stuck .navbar.bg-secondary {
+  background: rgba(27, 24, 21, 0.92) !important;
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  border-radius: 0;
+  box-shadow: 0 6px 28px rgba(27, 24, 21, 0.28);
+}
+.nav-bar.welm-stuck .navbar-brand img {
+  height: 54px;
+  transition: height var(--welm-base) var(--welm-ease);
+}
+.nav-bar.welm-stuck .navbar-dark .navbar-nav .nav-link {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.nav-bar.welm-stuck .navbar-dark .navbar-nav .nav-link::after {
+  bottom: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   6. HERO CAROUSEL
+   Slides mixed a 16:9 video with photos of other ratios, so the carousel
+   jumped height on every transition. A fixed ratio box with object-fit
+   settles it and kills the layout shift.
+   ------------------------------------------------------------------------ */
+#carouselExampleIndicators .carousel-item > img,
+#carouselExampleIndicators .carousel-item > video {
+  width: 100%;
+  height: clamp(360px, 62vh, 660px);
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Flat rgba(0,0,0,.5) over the whole frame washed the imagery out. A bottom
+   -weighted scrim keeps the photo readable and the text legible. */
+#carouselExampleIndicators .carousel-caption {
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 17, 14, 0.28) 0%,
+    rgba(20, 17, 14, 0.52) 45%,
+    rgba(20, 17, 14, 0.82) 100%
+  );
+  padding: 0;
+}
+
+#carouselExampleIndicators .carousel-caption h3 {
+  font-family: var(--welm-display);
+  color: var(--welm-paper);
+  font-size: clamp(2.3rem, 1.5rem + 3.2vw, 4rem);
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.45);
+}
+#carouselExampleIndicators .carousel-caption h3:first-child {
+  font-family: var(--welm-sans);
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--welm-gold-soft) !important;
+  margin-bottom: 0.75rem;
+}
+#carouselExampleIndicators .carousel-caption h4 {
+  color: var(--welm-gold-soft) !important;
+  font-size: clamp(0.9rem, 0.8rem + 0.4vw, 1.15rem);
+  letter-spacing: 0.1em;
+}
+#carouselExampleIndicators .carousel-caption p {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem);
+  margin: 0 auto;
+  max-width: 46ch;
+}
+
+/* Caption copy eases up as each slide becomes active. */
+#carouselExampleIndicators .carousel-item .carousel-caption > div > * {
+  opacity: 0;
+  transform: translateY(18px);
+}
+#carouselExampleIndicators .carousel-item.active .carousel-caption > div > * {
+  animation: welm-rise 700ms var(--welm-ease) forwards;
+}
+#carouselExampleIndicators .carousel-item.active .carousel-caption > div > *:nth-child(1) { animation-delay: 120ms; }
+#carouselExampleIndicators .carousel-item.active .carousel-caption > div > *:nth-child(2) { animation-delay: 220ms; }
+#carouselExampleIndicators .carousel-item.active .carousel-caption > div > *:nth-child(3) { animation-delay: 320ms; }
+#carouselExampleIndicators .carousel-item.active .carousel-caption > div > *:nth-child(4) { animation-delay: 420ms; }
+
+@keyframes welm-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Indicators as gold pills */
+#carouselExampleIndicators .carousel-indicators {
+  bottom: 22px;
+  z-index: 3;
+}
+#carouselExampleIndicators .carousel-indicators li,
+#carouselExampleIndicators .carousel-indicators button {
+  width: 28px;
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 0;
+  opacity: 1;
+  transition: width var(--welm-base) var(--welm-ease),
+              background var(--welm-base) var(--welm-ease);
+}
+#carouselExampleIndicators .carousel-indicators li.active,
+#carouselExampleIndicators .carousel-indicators button.active {
+  width: 46px;
+  background: var(--welm-gold);
+}
+
+/* ---------------------------------------------------------------------------
+   7. BUTTONS
+   ------------------------------------------------------------------------ */
+.btn {
+  font-family: var(--welm-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: var(--welm-r-sm);
+  transition: transform var(--welm-fast) var(--welm-ease),
+              box-shadow var(--welm-base) var(--welm-ease),
+              background-color var(--welm-fast) var(--welm-ease),
+              color var(--welm-fast) var(--welm-ease),
+              border-color var(--welm-fast) var(--welm-ease);
+  will-change: transform;
+}
+
+.btn-primary {
+  background-color: var(--welm-gold);
+  border-color: var(--welm-gold);
+  color: var(--welm-ink);
+  box-shadow: var(--welm-sh-1);
+}
+.btn-primary:hover {
+  background-color: var(--welm-gold-deep);
+  border-color: var(--welm-gold-deep);
+  color: var(--welm-paper);
+  transform: translateY(-2px);
+  box-shadow: var(--welm-sh-gold);
+}
+/* Physical press feedback — the whole site had none. */
+.btn:active,
+.btn-primary:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: var(--welm-sh-1);
+}
+
+.btn-outline-primary {
+  color: var(--welm-gold-ink);
+  border-color: var(--welm-gold);
+}
+.btn-outline-primary:hover {
+  background-color: var(--welm-gold);
+  border-color: var(--welm-gold);
+  color: var(--welm-ink);
+  transform: translateY(-2px);
+}
+
+/* The two prayer CTAs. `.gradient-blue`/`.gradient-yellow` declared
+   `background-image: #ffffff`, which is not a valid image value — the
+   declaration was dropped and both buttons rendered with no background. */
+.container78 {
+  gap: 0;
+  flex-wrap: wrap;
+  /* This wrapper has no padding of its own but contains a Bootstrap `.row`,
+     whose -15px side margins then reach past the viewport and force the whole
+     page to overflow horizontally. Neutralise the row instead. */
+  width: 100%;
+}
+.container78 > .row {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+.btn78 {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 28px;
+  border-radius: var(--welm-r-lg);
+  font-family: var(--welm-sans);
+  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: var(--welm-sh-2);
+  transition: transform var(--welm-base) var(--welm-ease),
+              box-shadow var(--welm-base) var(--welm-ease);
+}
+.btn78::after {
+  content: "→";
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.3em;
+  opacity: 0.55;
+  transition: transform var(--welm-base) var(--welm-ease),
+              opacity var(--welm-base) var(--welm-ease);
+}
+.btn78:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--welm-sh-3);
+}
+.btn78:hover::after {
+  transform: translateY(-50%) translateX(6px);
+  opacity: 1;
+}
+.btn78:active {
+  transform: translateY(-1px);
+}
+.gradient-blue {
+  /* radial offset rather than a flat 45° fade */
+  background-image: radial-gradient(120% 140% at 0% 0%, #35302a 0%, var(--welm-ink) 60%);
+  color: var(--welm-paper);
+  padding-right: 64px;
+}
+.gradient-yellow {
+  background-image: radial-gradient(120% 140% at 0% 0%, var(--welm-gold-soft) 0%, var(--welm-gold) 62%);
+  color: var(--welm-ink);
+  padding-right: 64px;
+}
+
+/* Back to top — the infinite 1s bounce was a permanent distraction.
+   Centred with line-height rather than flex: main.js fades this in with
+   jQuery, which writes an inline `display: block` and would defeat flex. */
+.back-to-top {
+  animation: none;
+  right: 24px;
+  bottom: 24px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  line-height: 48px;
+  text-align: center;
+  border-radius: 50%;
+  box-shadow: var(--welm-sh-3);
+  z-index: var(--welm-z-float);
+}
+.back-to-top:hover {
+  transform: translateY(-3px);
+}
+
+/* ---------------------------------------------------------------------------
+   8. CARDS, IMAGERY, GRIDS
+   ------------------------------------------------------------------------ */
+
+/* Ragged grids were the biggest layout problem: source images have mixed
+   ratios and nothing constrained them. */
+.portfolio-item .portfolio-img img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+.portfolio-item .portfolio-img {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+/* Hover animated `bottom`, which forces layout on every frame. Same effect
+   on the compositor via transform. */
+.portfolio-item .portfolio-img,
+.portfolio-item .portfolio-text {
+  transition: transform 520ms var(--welm-ease);
+}
+.portfolio-item .portfolio-img {
+  bottom: 0;
+  transform: translateY(0);
+}
+.portfolio-item:hover .portfolio-img {
+  bottom: 0;
+  transform: translateY(-100%);
+}
+.portfolio-item .portfolio-text {
+  bottom: 0;
+  transform: translateY(100%);
+  background: linear-gradient(160deg, var(--welm-ink-2) 0%, var(--welm-ink) 100%) !important;
+}
+.portfolio-item:hover .portfolio-text {
+  bottom: 0;
+  transform: translateY(0);
+}
+.portfolio-item .portfolio-text h4 {
+  font-family: var(--welm-display);
+  font-size: 1.75rem !important;
+  letter-spacing: 0;
+}
+.portfolio-item .portfolio-text p {
+  margin: 0;
+}
+
+/* Team */
+.team {
+  border-radius: var(--welm-r-md);
+  overflow: hidden;
+  box-shadow: var(--welm-sh-1);
+  transition: transform var(--welm-base) var(--welm-ease),
+              box-shadow var(--welm-base) var(--welm-ease);
+}
+.team:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--welm-sh-3);
+}
+.team .position-relative img {
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center top;
+}
+.team .team-social {
+  background: linear-gradient(to top, rgba(27, 24, 21, 0.86) 0%, rgba(27, 24, 21, 0.25) 100%);
+}
+.team .team-social .btn {
+  border-radius: 50%;
+  backdrop-filter: blur(4px);
+}
+.team .bg-secondary p {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+/* Blog / content cards */
+.card.border-0 {
+  border-radius: var(--welm-r-lg);
+  overflow: hidden;
+  box-shadow: var(--welm-sh-1);
+  transition: transform var(--welm-base) var(--welm-ease),
+              box-shadow var(--welm-base) var(--welm-ease);
+  height: 100%;
+}
+.card.border-0:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--welm-sh-3);
+}
+.card-img-top {
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+.card-body.bg-secondary {
+  background: linear-gradient(165deg, var(--welm-ink-2) 0%, var(--welm-ink) 100%) !important;
+  color: rgba(255, 255, 255, 0.74);
+}
+.card-body.bg-secondary p {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.92rem;
+}
+.card-body.bg-secondary h4,
+.card-body.bg-secondary h5 {
+  color: var(--welm-paper);
+}
+.card-body.bg-secondary small {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Card headings carried `.text-truncate`, so titles were cut mid-word at one
+   line. Allowed to wrap to two lines and clamped instead. */
+.card-body .text-truncate {
+  white-space: normal !important;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 1.05rem !important;
+  line-height: 1.35;
+}
+
+/* Service carousel tiles */
+.service-carousel .bg-light {
+  border-radius: var(--welm-r-md);
+  border: 1px solid var(--welm-line);
+  background: var(--welm-paper) !important;
+  transition: transform var(--welm-base) var(--welm-ease),
+              box-shadow var(--welm-base) var(--welm-ease),
+              border-color var(--welm-base) var(--welm-ease);
+  min-height: 210px;
+  justify-content: center;
+}
+.service-carousel .bg-light:hover {
+  transform: translateY(-4px);
+  border-color: var(--welm-gold);
+  box-shadow: var(--welm-sh-2);
+}
+.service-carousel .bg-light h1 {
+  color: var(--welm-gold);
+  font-size: 2rem !important;
+  margin-bottom: 0.85rem !important;
+}
+.service-carousel .bg-light h5 {
+  font-family: var(--welm-display);
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25;
+  color: var(--welm-ink);
+}
+.service-carousel .bg-light p {
+  font-size: 0.86rem;
+  color: var(--welm-muted);
+  letter-spacing: 0.02em;
+}
+
+/* Owl navigation arrows */
+.team-carousel .owl-nav .owl-prev,
+.team-carousel .owl-nav .owl-next,
+.service-carousel .owl-nav .owl-prev,
+.service-carousel .owl-nav .owl-next {
+  border-radius: 50%;
+  background: var(--welm-paper);
+  color: var(--welm-ink);
+  box-shadow: var(--welm-sh-2);
+  opacity: 0;
+  transition: opacity var(--welm-base) var(--welm-ease),
+              background var(--welm-fast) var(--welm-ease),
+              color var(--welm-fast) var(--welm-ease),
+              transform var(--welm-fast) var(--welm-ease);
+}
+.team-carousel:hover .owl-nav .owl-prev,
+.team-carousel:hover .owl-nav .owl-next,
+.service-carousel:hover .owl-nav .owl-prev,
+.service-carousel:hover .owl-nav .owl-next {
+  opacity: 1;
+}
+.team-carousel .owl-nav .owl-prev:hover,
+.team-carousel .owl-nav .owl-next:hover,
+.service-carousel .owl-nav .owl-prev:hover,
+.service-carousel .owl-nav .owl-next:hover {
+  background: var(--welm-gold);
+  color: var(--welm-ink);
+  transform: scale(1.08);
+}
+/* Touch devices never get :hover — keep arrows visible there. */
+@media (hover: none) {
+  .team-carousel .owl-nav .owl-prev,
+  .team-carousel .owl-nav .owl-next,
+  .service-carousel .owl-nav .owl-prev,
+  .service-carousel .owl-nav .owl-next {
+    opacity: 1;
+  }
+}
+
+/* Testimonials */
+.testimonial-carousel .d-flex.flex-column {
+  position: relative;
+  background: var(--welm-cream);
+  border-radius: var(--welm-r-lg);
+  border-left: 3px solid var(--welm-gold);
+  padding: 30px 32px 32px;
+}
+.testimonial-carousel .d-flex.flex-column p {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--welm-ink-3);
+}
+.testimonial-carousel h5 {
+  font-family: var(--welm-sans);
+  font-size: 0.95rem !important;
+  color: var(--welm-ink);
+}
+.testimonial-carousel img.rounded-circle {
+  object-fit: cover;
+  border: 2px solid var(--welm-gold);
+  padding: 2px;
+}
+.testimonial-carousel .owl-nav .owl-prev,
+.testimonial-carousel .owl-nav .owl-next {
+  border-radius: 50%;
+  border-color: var(--welm-line);
+  color: var(--welm-gold-ink);
+  transition: all var(--welm-fast) var(--welm-ease);
+}
+.testimonial-carousel .owl-nav .owl-prev:hover,
+.testimonial-carousel .owl-nav .owl-next:hover {
+  background: var(--welm-gold);
+  border-color: var(--welm-gold);
+  color: var(--welm-ink);
+}
+
+/* Portrait images that previously sat flush against the layout edge */
+.shadow_pic,
+img[src*="DR. FAITH"],
+img[src*="Dr. FJ"] {
+  border-radius: var(--welm-r-lg);
+  object-fit: cover;
+  box-shadow: var(--welm-sh-3);
+}
+
+/* Theme / programme artwork used a hard `4px 4px 8px gray` inline shadow.
+   These override it with a soft, tinted, straight-down cast. */
+img[style*="box-shadow"],
+div[style*="box-shadow"] {
+  box-shadow: var(--welm-sh-2) !important;
+  border-radius: var(--welm-r-md);
+}
+
+/* ---------------------------------------------------------------------------
+   9. INNER PAGE HEADERS
+   Every page but the homepage opens with `.container-fluid.bg-secondary`.
+   ------------------------------------------------------------------------ */
+.container-fluid.bg-secondary {
+  background: linear-gradient(135deg, var(--welm-ink-2) 0%, var(--welm-ink) 100%) !important;
+  position: relative;
+}
+.container-fluid.bg-secondary h1,
+.container-fluid.bg-secondary h2,
+.container-fluid.bg-secondary h3,
+.container-fluid.bg-secondary h4 {
+  color: var(--welm-paper);
+}
+.container-fluid.bg-secondary .c-cyan {
+  color: var(--welm-gold) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   10. FORMS
+   ------------------------------------------------------------------------ */
+.form-control {
+  border-radius: var(--welm-r-sm);
+  border: 1px solid var(--welm-line);
+  padding: 0.7rem 0.95rem;
+  font-size: 0.92rem;
+  color: var(--welm-ink);
+  background-color: var(--welm-paper);
+  transition: border-color var(--welm-fast) var(--welm-ease),
+              box-shadow var(--welm-fast) var(--welm-ease);
+}
+.form-control::placeholder {
+  color: #a29889;
+}
+.form-control:focus {
+  border-color: var(--welm-gold);
+  box-shadow: 0 0 0 3px rgba(223, 177, 99, 0.22);
+  outline: none;
+}
+.form-group {
+  margin-bottom: 0.9rem;
+}
+label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--welm-ink-2);
+  margin-bottom: 0.35rem;
+}
+textarea.form-control {
+  min-height: 130px;
+  resize: vertical;
+}
+
+/* ---------------------------------------------------------------------------
+   11. FOOTER
+   ------------------------------------------------------------------------ */
+.bg-dark.text-white h4.text-primary {
+  font-family: var(--welm-sans);
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--welm-gold) !important;
+  margin-bottom: 1.4rem !important;
+}
+.bg-dark.text-white a.text-white,
+.bg-dark.text-white a.text-white p {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 0.9rem;
+  transition: color var(--welm-fast) var(--welm-ease),
+              transform var(--welm-fast) var(--welm-ease);
+}
+.bg-dark.text-white a.text-white:hover,
+.bg-dark.text-white a.text-white:hover p {
+  color: var(--welm-gold) !important;
+  text-decoration: none;
+}
+.bg-dark.text-white .d-flex.flex-column a.text-white:hover {
+  transform: translateX(4px);
+}
+.bg-dark.text-white .d-flex.flex-column a.text-white {
+  display: inline-block;
+}
+.bg-dark.text-white .fa-angle-right {
+  color: var(--welm-gold);
+  opacity: 0.6;
+}
+.bg-dark .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.25);
+  transition: all var(--welm-fast) var(--welm-ease);
+}
+.bg-dark .btn-outline-light:hover {
+  background: var(--welm-gold);
+  border-color: var(--welm-gold);
+  color: var(--welm-ink);
+  transform: translateY(-3px);
+}
+.bg-dark .form-control.border-0 {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--welm-paper);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.bg-dark .form-control.border-0::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+.bg-dark .form-control.border-0:focus {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: var(--welm-gold) !important;
+}
+.border-top.border-secondary {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.border-top.border-secondary p {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   12. MODALS
+   ------------------------------------------------------------------------ */
+.modal-content {
+  border: 0;
+  border-radius: var(--welm-r-lg);
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(27, 24, 21, 0.35);
+}
+.modal-header {
+  background: var(--welm-cream);
+  border-bottom: 1px solid var(--welm-line);
+}
+.modal-title {
+  font-family: var(--welm-display);
+  color: var(--welm-ink);
+}
+.modal-footer {
+  border-top: 1px solid var(--welm-line);
+  background: var(--welm-cream);
+}
+.modal-body iframe {
+  border-radius: var(--welm-r-sm);
+}
+
+/* ---------------------------------------------------------------------------
+   13. SCROLL REVEAL
+   Elements get `.welm-reveal` from js/ui-enhance.js, then `.welm-in` when
+   they enter the viewport. Guarded so content is visible without JS.
+   ------------------------------------------------------------------------ */
+/* The hidden state is gated on `html.welm-js`, which the script sets only
+   once it is actually running. If the script fails, is blocked, or never
+   loads, no content is ever hidden — the page degrades to fully visible
+   rather than blank. */
+html.welm-js .welm-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 700ms var(--welm-ease), transform 700ms var(--welm-ease);
+}
+html.welm-js .welm-reveal.welm-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+   14. RESPONSIVE
+   ------------------------------------------------------------------------ */
+@media (max-width: 991.98px) {
+  .container78 {
+    flex-direction: column;
+  }
+  .navbar-brand img {
+    height: 56px !important;
+  }
+  /* `float: right` on the theme/event panels broke the mobile stack. */
+  [style*="float: right"],
+  [style*="float:right"] {
+    float: none !important;
+    width: 100%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  #carouselExampleIndicators .carousel-item > img,
+  #carouselExampleIndicators .carousel-item > video {
+    height: clamp(320px, 56vh, 440px);
+  }
+  #carouselExampleIndicators .carousel-caption h3 {
+    font-size: 1.6rem;
+  }
+  .btn78 {
+    padding: 18px 56px 18px 22px;
+  }
+  .back-to-top {
+    right: 16px;
+    bottom: 16px;
+  }
+  .testimonial-carousel .d-flex.flex-column {
+    padding: 24px 22px 26px;
+  }
+  /* The About panel sets this logo to height="300", which overflows a phone.
+     The navbar uses the *same image file* at height="75", so this must be
+     scoped to the non-navbar instance — releasing the height on the brand
+     mark blows it up to its intrinsic size and forces the page sideways. */
+  :not(.navbar-brand) > img[src*="KOG LOGO"],
+  :not(.navbar-brand) > img[src*="KOG-LOGO"] {
+    height: auto !important;
+  }
+  .navbar-brand img {
+    height: 52px !important;
+    width: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   15. MOTION PREFERENCES
+   ------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .welm-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  #carouselExampleIndicators .carousel-item .carousel-caption > div > * {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   16. PRINT
+   ------------------------------------------------------------------------ */
+@media print {
+  .nav-bar,
+  .back-to-top,
+  .owl-nav,
+  .carousel-indicators {
+    display: none !important;
+  }
+  .welm-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
