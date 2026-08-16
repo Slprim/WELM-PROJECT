@@ -1,7 +1,9 @@
 ---
 import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
-import { committee } from "../../data/about";
+import { getCommittee } from "../../lib/content";
+
+const committee = await getCommittee();
 
 /** Initials stand in until the client supplies portraits for each member. */
 const initials = (name: string) =>

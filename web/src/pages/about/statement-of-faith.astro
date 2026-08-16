@@ -1,7 +1,10 @@
 ---
 import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
-import { statementOfFaith, mission } from "../../data/about";
+import { mission } from "../../data/about";
+import { getStatementOfFaith } from "../../lib/content";
+
+const statementOfFaith = await getStatementOfFaith();
 ---
 
 <Base

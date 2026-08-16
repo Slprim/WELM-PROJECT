@@ -1,0 +1,24 @@
+{
+  "name": "welm-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Sanity Studio for Words of Eternal Life Ministries",
+  "scripts": {
+    "dev": "sanity dev",
+    "start": "sanity start",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "seed": "node --experimental-strip-types scripts/seed.ts"
+  },
+  "dependencies": {
+    "@sanity/vision": "^3.68.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sanity": "^3.68.0",
+    "styled-components": "^6.1.13"
+  },
+  "devDependencies": {
+    "@sanity/client": "^6.22.5"
+  }
+}

@@ -2,7 +2,9 @@
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import { site } from "../data/site";
-import { posts } from "../data/posts";
+import { getPosts } from "../lib/content";
+
+const posts = await getPosts();
 
 const [lead, ...rest] = posts;
 ---

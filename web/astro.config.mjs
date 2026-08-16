@@ -7,6 +7,12 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://welm.org',
 
+  image: {
+    // Sanity serves uploaded images from its own CDN; Astro will only
+    // optimise remote images from hosts listed here.
+    domains: ['cdn.sanity.io'],
+  },
+
   vite: {
     plugins: [tailwindcss()],
     build: {

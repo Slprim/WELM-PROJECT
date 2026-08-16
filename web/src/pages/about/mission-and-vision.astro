@@ -2,7 +2,9 @@
 import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import { mission } from "../../data/about";
-import { themes } from "../../data/site";
+import { getThemes } from "../../lib/content";
+
+const themes = await getThemes();
 ---
 
 <Base
