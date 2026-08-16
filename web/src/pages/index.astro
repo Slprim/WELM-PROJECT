@@ -1,8 +1,8 @@
 ---
 import { Image } from "astro:assets";
 import Base from "../layouts/Base.astro";
+import HeroCarousel from "../components/HeroCarousel.astro";
 import { site, services } from "../data/site";
-import heroImage from "../assets/hero-metadidomi.jpg";
 import pastorImage from "../assets/pastor-faith-joseph.jpg";
 import congregationImage from "../assets/congregation.jpg";
 
@@ -15,116 +15,7 @@ const gatherings = services.filter((s) => s.where === "In person");
   title="Home"
   description={`${site.legalName} — ${site.tagline}. Join us in ${site.address.city} on Sundays at 8am, or online every day.`}
 >
-  {/* ==================================================================
-      HERO
-      ================================================================== */}
-  <section class="relative isolate flex min-h-[92svh] items-end overflow-hidden bg-navy-950">
-    <Image
-      src={heroImage}
-      alt="Pastor Faith Joseph teaching at a Metadidomi service"
-      class="absolute inset-0 -z-10 h-full w-full object-cover object-[60%_center] opacity-55"
-      widths={[640, 1024, 1600, 2048]}
-      sizes="100vw"
-      loading="eager"
-      fetchpriority="high"
-    />
-
-    <!-- Two overlays: a vertical wash for text contrast, and a navy tint
-         that pulls the photo's warm cast back toward the brand colour. -->
-    <div
-      class="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/80 to-navy-950/30"
-    >
-    </div>
-    <div class="absolute inset-0 -z-10 bg-navy-900/40 mix-blend-multiply"></div>
-
-    <div class="shell w-full pb-20 pt-36 sm:pb-28">
-      <div class="max-w-5xl">
-        <p class="eyebrow text-gold-400" data-reveal>
-          {site.address.city}, {site.address.country}
-        </p>
-
-        {/* No forced <br>: `text-wrap: balance` on headings distributes the
-            lines, so the phrase "the fullness of Christ" is not split across
-            a break at any width. */}
-        <h1
-          class="mt-7 font-display text-display-2xl font-light leading-[0.92] text-white"
-          data-reveal
-          data-reveal-delay="80"
-        >
-          Building you into <span class="italic text-gold-400">the fullness</span
-          > of Christ
-        </h1>
-
-        <p
-          class="mt-8 max-w-xl text-lg leading-relaxed text-white/75"
-          data-reveal
-          data-reveal-delay="160"
-        >
-          Words of Eternal Life Ministries is a house in Accra where the word is
-          taught without apology and lived without pretence. Everyone is
-          welcome — come as you are.
-        </p>
-
-        <div
-          class="mt-11 flex flex-wrap items-center gap-4"
-          data-reveal
-          data-reveal-delay="240"
-        >
-          <a href="/live" class="btn-gold">
-            <span
-              class="relative flex h-2 w-2"
-              aria-hidden="true"
-            >
-              <span
-                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-navy-950 opacity-60"
-              ></span>
-              <span
-                class="relative inline-flex h-2 w-2 rounded-full bg-navy-950"
-              ></span>
-            </span>
-            Watch live
-          </a>
-          <a href="/about" class="btn-ghost">Plan your visit</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Next-service rail, pinned to the hero's bottom edge -->
-    <div
-      class="absolute inset-x-0 bottom-0 hidden border-t border-white/10 bg-navy-950/60 backdrop-blur-md lg:block"
-    >
-      <div class="shell grid grid-cols-3 divide-x divide-white/10">
-        <div class="py-6 pr-8">
-          <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
-            This Sunday
-          </p>
-          <p class="mt-2 text-sm text-white">
-            {sunday.name} · {sunday.time}
-          </p>
-        </div>
-        <div class="px-8 py-6">
-          <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
-            Every weekday
-          </p>
-          <p class="mt-2 text-sm text-white">Declaration Hour · 5:00 am</p>
-        </div>
-        <div class="py-6 pl-8">
-          <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
-            Find us
-          </p>
-          <a
-            href={site.address.mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mt-2 block text-sm text-white transition hover:text-gold-400"
-          >
-            {site.address.street}
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
+  <HeroCarousel />
   {/* ==================================================================
       VISION
       ================================================================== */}
@@ -132,10 +23,11 @@ const gatherings = services.filter((s) => s.where === "In person");
     <div class="shell">
       <div class="grid gap-16 lg:grid-cols-12 lg:gap-20">
         <div class="lg:col-span-5">
-          <p class="eyebrow text-gold-800" data-reveal>Our vision</p>
+          <p class="eyebrow text-gold-800" data-reveal="left">Our vision</p>
           <h2
             class="mt-7 font-display text-display-lg font-light leading-[1.05]"
-            data-reveal
+            data-reveal="left"
+            data-reveal-delay="80"
           >
             That men will live like God
           </h2>
@@ -204,14 +96,19 @@ const gatherings = services.filter((s) => s.where === "In person");
         <article
           class="group relative isolate overflow-hidden rounded-3xl lg:col-span-2 lg:row-span-2"
           data-reveal
+          data-parallax-root
         >
+          {/* Parallax replaces the hover-scale here — the two would fight
+              over the same transform. The card's overflow-hidden crops the
+              1.1 scale the drift needs. */}
           <Image
             src={congregationImage}
             alt="The congregation gathered for a Sunday service"
-            class="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            class="absolute inset-0 -z-10 h-full w-full object-cover"
             widths={[640, 1024, 1400]}
             sizes="(min-width: 1024px) 66vw, 100vw"
             loading="lazy"
+            data-parallax
           />
           <div
             class="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/70 to-transparent"
@@ -235,7 +132,7 @@ const gatherings = services.filter((s) => s.where === "In person");
         <!-- Daily online -->
         <article
           class="rounded-3xl border border-white/10 bg-navy-900 p-8"
-          data-reveal
+          data-reveal="scale"
           data-reveal-delay="100"
         >
           <p class="text-xs uppercase tracking-[0.2em] text-gold-400">
@@ -258,7 +155,7 @@ const gatherings = services.filter((s) => s.where === "In person");
         <!-- Monthly -->
         <article
           class="rounded-3xl border border-gold-500/25 bg-gradient-to-br from-navy-800 to-navy-900 p-8"
-          data-reveal
+          data-reveal="scale"
           data-reveal-delay="180"
         >
           <p class="text-xs uppercase tracking-[0.2em] text-gold-400">
@@ -291,7 +188,7 @@ const gatherings = services.filter((s) => s.where === "In person");
   <section class="section bg-sand-100">
     <div class="shell">
       <div class="grid items-center gap-14 lg:grid-cols-12 lg:gap-20">
-        <div class="lg:col-span-5" data-reveal>
+        <div class="lg:col-span-5" data-reveal="scale">
           <div class="relative">
             <div
               class="absolute -inset-5 -z-10 rounded-3xl border-2 border-gold-400/60"
@@ -310,10 +207,11 @@ const gatherings = services.filter((s) => s.where === "In person");
         </div>
 
         <div class="lg:col-span-7">
-          <p class="eyebrow text-gold-800" data-reveal>Our leader</p>
+          <p class="eyebrow text-gold-800" data-reveal="right">Our leader</p>
           <h2
             class="mt-7 font-display text-display-lg font-light leading-[1.05]"
-            data-reveal
+            data-reveal="right"
+            data-reveal-delay="80"
           >
             Pastor Faith Joseph
           </h2>

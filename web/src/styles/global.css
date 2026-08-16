@@ -206,17 +206,123 @@
 }
 
 /* ============================================================================
-   SCROLL REVEAL
-   Elements start hidden only once JS confirms it is running (the .js-reveal
-   class is added by the script), so with JS disabled nothing is ever stuck
-   invisible — the failure mode of the previous implementation.
+   SCROLL ANIMATION
+
+   Two implementations of the same effect:
+
+   1. Scroll-driven CSS animations (`animation-timeline: view()`) where the
+      browser supports them. These run on the compositor — no scroll
+      listeners, no layout thrash, and the animation tracks the scroll
+      position exactly rather than firing once on a threshold.
+   2. An IntersectionObserver fallback for everything else, enabled by the
+      `.js-reveal` class which the layout script adds *only* when the modern
+      path is unavailable.
+
+   Content is never hidden by default in either path, so a script failure or
+   an unsupported browser leaves the page fully readable.
    ========================================================================= */
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes reveal-scale {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes reveal-left {
+  from { opacity: 0; transform: translateX(-36px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes reveal-right {
+  from { opacity: 0; transform: translateX(36px); }
+  to { opacity: 1; transform: none; }
+}
+/* Media drifts slower than the page it sits in. Kept to ±5% so it reads as
+   depth rather than as the image sliding around inside its frame. */
+@keyframes parallax-drift {
+  from { transform: translateY(-5%) scale(1.1); }
+  to { transform: translateY(5%) scale(1.1); }
+}
+@keyframes rule-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes progress-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* The reading-progress bar is pure CSS against the root scroll timeline.
+   It only exists where scroll-driven animations work, so it can never be
+   stuck at full width. */
+.scroll-progress {
+  display: none;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 50%;
+    }
+
+    [data-reveal="scale"] { animation-name: reveal-scale; }
+    [data-reveal="left"] { animation-name: reveal-left; }
+    [data-reveal="right"] { animation-name: reveal-right; }
+
+    /* Staggering a scroll-linked animation means offsetting its range, not
+       delaying it — a delay would desync it from the scroll position. */
+    [data-reveal-delay="80"] { animation-range: entry 6% entry 56%; }
+    [data-reveal-delay="100"] { animation-range: entry 8% entry 58%; }
+    [data-reveal-delay="160"] { animation-range: entry 12% entry 62%; }
+    [data-reveal-delay="180"] { animation-range: entry 14% entry 64%; }
+    [data-reveal-delay="240"] { animation-range: entry 18% entry 68%; }
+
+    /* The timeline is declared on the card, not on the image.
+       With `animation-timeline: view()` the animated element is its own
+       timeline subject, and transforming it feeds back into the position
+       the timeline is measured from — Chrome resolves that by pinning
+       progress at 0.5, so nothing moves. Naming the timeline on the
+       stationary parent breaks the loop. */
+    [data-parallax-root] {
+      view-timeline-name: --parallax;
+      view-timeline-axis: block;
+    }
+
+    [data-parallax] {
+      animation: parallax-drift linear both;
+      animation-timeline: --parallax;
+      animation-range: cover 0% cover 100%;
+      will-change: transform;
+    }
+
+    .eyebrow::before {
+      animation: rule-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 45%;
+      transform-origin: left center;
+    }
+
+    .scroll-progress {
+      display: block;
+      animation: progress-grow linear both;
+      animation-timeline: scroll(root block);
+      transform-origin: 0 50%;
+    }
+  }
+}
 
 @layer utilities {
   .js-reveal [data-reveal] {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(24px);
   }
+
+  .js-reveal [data-reveal="scale"] { transform: scale(0.94); }
+  .js-reveal [data-reveal="left"] { transform: translateX(-32px); }
+  .js-reveal [data-reveal="right"] { transform: translateX(32px); }
 
   .js-reveal [data-reveal].is-visible {
     opacity: 1;

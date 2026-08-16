@@ -1,0 +1,481 @@
+---
+import { Image } from "astro:assets";
+import { site, services } from "../data/site";
+import metadidomiImage from "../assets/hero-metadidomi.jpg";
+import visionImage from "../assets/vision.jpg";
+
+/**
+ * The homepage hero carousel — the legacy site's video banner, rebuilt.
+ *
+ * Same three slides as the Bootstrap original (welcome video, Metadidomi,
+ * the vision) and the same captions, but without jQuery or Bootstrap, and
+ * meeting WCAG 2.2.2: auto-advancing content has a visible pause control,
+ * stops on hover and on keyboard focus, and never starts at all under
+ * `prefers-reduced-motion`.
+ *
+ * The source video was 25.7MB of 720p at 11.8 Mbps with an audio track that
+ * is never heard. It is re-encoded to 849KB, muted, in `public/video/`.
+ */
+
+const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
+---
+
+<section
+  id="hero"
+  class="relative isolate flex min-h-[92svh] items-end overflow-hidden bg-navy-950"
+  aria-roledescription="carousel"
+  aria-label="Welcome"
+>
+  <!-- ===================== SLIDES ===================== -->
+  <div class="absolute inset-0 -z-10">
+    <!-- Slide 1 — welcome video -->
+    <div
+      class="hero-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ease-out"
+      data-slide="0"
+      role="group"
+      aria-roledescription="slide"
+      aria-label="1 of 3: Welcome"
+    >
+      <video
+        id="hero-video"
+        class="h-full w-full object-cover object-center opacity-55"
+        poster="/video/hero-poster.jpg"
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        aria-hidden="true"
+        tabindex="-1"
+      >
+        <source src="/video/hero.mp4" type="video/mp4" />
+      </video>
+    </div>
+
+    <!-- Slide 2 — Metadidomi -->
+    <div
+      class="hero-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ease-out"
+      data-slide="1"
+      role="group"
+      aria-roledescription="slide"
+      aria-label="2 of 3: That men will live like God"
+    >
+      <Image
+        src={metadidomiImage}
+        alt="Pastor Faith Joseph teaching at a Metadidomi service"
+        class="h-full w-full object-cover object-[60%_center] opacity-55"
+        widths={[640, 1024, 1600, 2048]}
+        sizes="100vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+
+    <!-- Slide 3 — the vision -->
+    <div
+      class="hero-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ease-out"
+      data-slide="2"
+      role="group"
+      aria-roledescription="slide"
+      aria-label="3 of 3: It is a vision"
+    >
+      <Image
+        src={visionImage}
+        alt="The congregation worshipping together"
+        class="h-full w-full object-cover object-center opacity-55"
+        widths={[640, 1024, 1600, 2048]}
+        sizes="100vw"
+        loading="lazy"
+      />
+    </div>
+
+    <!-- Overlays sit above every slide so the wash never re-fades -->
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/80 to-navy-950/30"
+    >
+    </div>
+    <div class="absolute inset-0 bg-navy-900/40 mix-blend-multiply"></div>
+  </div>
+
+  <!-- ===================== CAPTIONS ===================== -->
+  <div class="shell w-full pb-32 pt-36 sm:pb-36">
+    <div class="max-w-5xl">
+      {/* All three captions share one grid cell, so the block is always as
+          tall as the tallest caption and none of them can spill over the
+          CTA row below — which absolute positioning did. */}
+      <div class="grid">
+        <!-- Caption 1 -->
+        <div
+          class="hero-caption col-start-1 row-start-1 transition-all duration-700 ease-out"
+          data-caption="0"
+        >
+          <p class="eyebrow text-gold-400">Welcome to</p>
+          <h1
+            class="mt-7 font-display text-display-2xl font-light leading-[0.92] text-white"
+          >
+            Kingdom <span class="italic text-gold-400">of Gods</span>
+          </h1>
+          <p class="mt-8 max-w-xl text-lg leading-relaxed text-white/75">
+            {site.legalName}. {site.tagline}.
+          </p>
+        </div>
+
+        <!-- Caption 2 -->
+        <div
+          class="hero-caption col-start-1 row-start-1 transition-all duration-700 ease-out"
+          data-caption="1"
+          aria-hidden="true"
+        >
+          <p class="eyebrow text-gold-400">Our vision</p>
+          <h1
+            class="mt-7 font-display text-display-2xl font-light leading-[0.92] text-white"
+          >
+            That men will <span class="italic text-gold-400">live like God</span>
+          </h1>
+          <p class="mt-8 max-w-xl text-lg leading-relaxed text-white/75">
+            A house in {site.address.city} where the word is taught without
+            apology and lived without pretence.
+          </p>
+        </div>
+
+        <!-- Caption 3 -->
+        <div
+          class="hero-caption col-start-1 row-start-1 transition-all duration-700 ease-out"
+          data-caption="2"
+          aria-hidden="true"
+        >
+          <p class="eyebrow text-gold-400">It's a vision</p>
+          <h1
+            class="mt-7 font-display text-display-2xl font-light leading-[0.92] text-white"
+          >
+            Building you into <span class="italic text-gold-400"
+              >the fullness</span
+            > of Christ
+          </h1>
+          <p class="mt-8 max-w-xl text-lg leading-relaxed text-white/75">
+            Everyone is welcome — come as you are.
+          </p>
+        </div>
+      </div>
+
+      <!-- CTAs stay put across slides so the buttons never jump -->
+      <div class="mt-11 flex flex-wrap items-center gap-4">
+        <a href="/live" class="btn-gold">
+          <span class="relative flex h-2 w-2" aria-hidden="true">
+            <span
+              class="absolute inline-flex h-full w-full animate-ping rounded-full bg-navy-950 opacity-60"
+            ></span>
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-navy-950"
+            ></span>
+          </span>
+          Watch live
+        </a>
+        <a href="/about" class="btn-ghost">Plan your visit</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CONTROLS =====================
+       Indicators and buttons share one cluster on the right. Kept off the
+       left edge so they never crowd the CTA row at narrow widths. -->
+  {/* The service rail only exists at lg, so below that the controls sit near
+      the hero's bottom edge. At bottom-28 they landed inside the CTA row. */}
+  <div
+    class="absolute bottom-6 right-5 z-20 flex items-center gap-4 sm:right-8 lg:bottom-32"
+  >
+    <div class="mr-1 flex items-center gap-2" role="tablist" aria-label="Choose slide">
+      {
+        [0, 1, 2].map((i) => (
+          <button
+            type="button"
+            class="hero-dot h-1.5 rounded-full bg-white/30 transition-all duration-300 hover:bg-white/60"
+            data-dot={i}
+            role="tab"
+            aria-label={`Go to slide ${i + 1}`}
+            aria-selected={i === 0 ? "true" : "false"}
+          />
+        ))
+      }
+    </div>
+
+    <button
+      type="button"
+      id="hero-prev"
+      class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+      aria-label="Previous slide"
+      aria-controls="hero"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        class="h-4 w-4"
+        aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg
+      >
+    </button>
+
+    <button
+      type="button"
+      id="hero-playpause"
+      class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+      aria-label="Pause slideshow"
+      aria-controls="hero"
+    >
+      <svg
+        data-icon="pause"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        class="h-4 w-4"
+        aria-hidden="true"
+        ><path d="M8 5h3v14H8zM13 5h3v14h-3z"></path></svg
+      >
+      <svg
+        data-icon="play"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        class="hidden h-4 w-4"
+        aria-hidden="true"><path d="M7 4l12 8-12 8z"></path></svg
+      >
+    </button>
+
+    <button
+      type="button"
+      id="hero-next"
+      class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+      aria-label="Next slide"
+      aria-controls="hero"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        class="h-4 w-4"
+        aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg
+      >
+    </button>
+  </div>
+
+  <!-- ===================== SERVICE RAIL ===================== -->
+  <div
+    class="absolute inset-x-0 bottom-0 z-10 hidden border-t border-white/10 bg-navy-950/60 backdrop-blur-md lg:block"
+  >
+    <div class="shell grid grid-cols-3 divide-x divide-white/10">
+      <div class="py-6 pr-8">
+        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
+          This Sunday
+        </p>
+        <p class="mt-2 text-sm text-white">{sunday.name} · {sunday.time}</p>
+      </div>
+      <div class="px-8 py-6">
+        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
+          Every weekday
+        </p>
+        <p class="mt-2 text-sm text-white">Declaration Hour · 5:00 am</p>
+      </div>
+      <div class="py-6 pl-8">
+        <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
+          Find us
+        </p>
+        <a
+          href={site.address.mapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-2 block text-sm text-white transition hover:text-gold-400"
+        >
+          {site.address.street}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Before JS runs, the first slide and caption stand alone so the hero is
+     never blank — the legacy carousel showed nothing until Bootstrap booted.
+     These are plain attribute selectors, so they must be *switched off* once
+     the script takes over; otherwise slide 0 stays lit under every later
+     slide and the captions stack on top of each other. The `.js-carousel`
+     class (added on init) hands control entirely to `.is-active`. */
+  .hero-slide[data-slide="0"],
+  .hero-caption[data-caption="0"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-caption {
+    opacity: 0;
+    transform: translateY(14px);
+    /* Stacked captions must not swallow clicks meant for the live one. */
+    pointer-events: none;
+  }
+
+  .js-carousel .hero-slide,
+  .js-carousel .hero-caption {
+    opacity: 0;
+  }
+
+  .js-carousel .hero-caption {
+    transform: translateY(14px);
+  }
+
+  .hero-slide.is-active,
+  .js-carousel .hero-slide.is-active {
+    opacity: 1;
+  }
+
+  .hero-caption.is-active,
+  .js-carousel .hero-caption.is-active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .hero-dot {
+    width: 1.5rem;
+  }
+
+  .hero-dot[aria-selected="true"] {
+    width: 3rem;
+    background-color: var(--color-gold-500);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-slide,
+    .hero-caption {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const hero = document.getElementById("hero");
+  if (hero) {
+    const slides = Array.from(
+      hero.querySelectorAll<HTMLElement>(".hero-slide"),
+    );
+    const captions = Array.from(
+      hero.querySelectorAll<HTMLElement>(".hero-caption"),
+    );
+    const dots = Array.from(hero.querySelectorAll<HTMLElement>(".hero-dot"));
+    const video = document.getElementById("hero-video") as HTMLVideoElement | null;
+    const prevBtn = document.getElementById("hero-prev");
+    const nextBtn = document.getElementById("hero-next");
+    const playBtn = document.getElementById("hero-playpause");
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Respect the browser's data-saver setting: no autoplaying video on a
+    // metered connection. Relevant for the mobile-heavy Ghanaian audience.
+    const saveData =
+      (navigator as Navigator & { connection?: { saveData?: boolean } })
+        .connection?.saveData === true;
+
+    // The video slide holds longer than the stills so the clip can breathe.
+    const DURATIONS = [12000, 7000, 7000];
+
+    let index = 0;
+    let timer: number | undefined;
+    let paused = reduced.matches;
+
+    const show = (next: number) => {
+      index = (next + slides.length) % slides.length;
+
+      slides.forEach((el, i) => {
+        el.classList.toggle("is-active", i === index);
+        el.setAttribute("aria-hidden", String(i !== index));
+      });
+
+      captions.forEach((el, i) => {
+        el.classList.toggle("is-active", i === index);
+        el.setAttribute("aria-hidden", String(i !== index));
+      });
+
+      dots.forEach((el, i) =>
+        el.setAttribute("aria-selected", String(i === index)),
+      );
+
+      // Only run the video while its own slide is on screen — decoding it
+      // behind two other slides is wasted battery.
+      if (video && !saveData && !reduced.matches) {
+        if (index === 0) {
+          video.play().catch(() => {
+            /* autoplay refused; the poster stands in */
+          });
+        } else {
+          video.pause();
+        }
+      }
+    };
+
+    const stop = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = undefined;
+    };
+
+    const schedule = () => {
+      stop();
+      if (paused) return;
+      timer = window.setTimeout(() => {
+        show(index + 1);
+        schedule();
+      }, DURATIONS[index]);
+    };
+
+    const setPaused = (value: boolean) => {
+      paused = value;
+      playBtn?.setAttribute(
+        "aria-label",
+        value ? "Play slideshow" : "Pause slideshow",
+      );
+      playBtn
+        ?.querySelector('[data-icon="pause"]')
+        ?.classList.toggle("hidden", value);
+      playBtn
+        ?.querySelector('[data-icon="play"]')
+        ?.classList.toggle("hidden", !value);
+      if (value) stop();
+      else schedule();
+    };
+
+    const goto = (next: number) => {
+      show(next);
+      if (!paused) schedule();
+    };
+
+    prevBtn?.addEventListener("click", () => goto(index - 1));
+    nextBtn?.addEventListener("click", () => goto(index + 1));
+    playBtn?.addEventListener("click", () => setPaused(!paused));
+
+    dots.forEach((dot, i) => dot.addEventListener("click", () => goto(i)));
+
+    // Arrow-key control when focus is anywhere inside the hero.
+    hero.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goto(index - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goto(index + 1);
+      }
+    });
+
+    // WCAG 2.2.2 — pause on hover and on keyboard focus.
+    hero.addEventListener("mouseenter", stop);
+    hero.addEventListener("mouseleave", () => !paused && schedule());
+    hero.addEventListener("focusin", stop);
+    hero.addEventListener("focusout", () => !paused && schedule());
+
+    // Don't burn cycles advancing a carousel nobody is looking at.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stop();
+      else if (!paused) schedule();
+    });
+
+    // Hand opacity control over to .is-active now that the script is live.
+    hero.classList.add("js-carousel");
+
+    show(0);
+    if (reduced.matches) setPaused(true);
+    else schedule();
+  }
+</script>
