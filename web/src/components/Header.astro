@@ -1,0 +1,316 @@
+---
+import Logo from "./Logo.astro";
+import { nav, site } from "../data/site";
+
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/" ? path === "/" : path.startsWith(href);
+---
+
+<header
+  id="site-header"
+  class="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+  data-at-top="true"
+>
+  <!-- Utility strip: collapses away as soon as the page scrolls -->
+  <div
+    id="utility-strip"
+    class="hidden overflow-hidden border-b border-white/10 bg-navy-950 transition-all duration-300 lg:block"
+  >
+    <div class="shell flex h-10 items-center justify-between text-xs">
+      <div class="flex items-center gap-6 text-white/60">
+        <a href="/faq" class="transition hover:text-gold-400">FAQs</a>
+        <a href="/help" class="transition hover:text-gold-400">Help</a>
+        <a
+          href={`mailto:${site.email}`}
+          class="hidden transition hover:text-gold-400 xl:inline"
+        >
+          {site.email}
+        </a>
+      </div>
+      <div class="flex items-center gap-5">
+        <a
+          href={site.social.facebook}
+          class="text-white/60 transition hover:text-gold-400"
+          aria-label="Facebook"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5"
+            ><path
+              d="M9.1 22v-8.4H6.2V10h2.9V7.6c0-2.9 1.8-4.5 4.4-4.5 1.2 0 2.5.2 2.5.2v2.8h-1.4c-1.4 0-1.8.9-1.8 1.8V10h3.1l-.5 3.6h-2.6V22"
+            ></path></svg
+          >
+        </a>
+        <a
+          href={site.social.instagram}
+          class="text-white/60 transition hover:text-gold-400"
+          aria-label="Instagram"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5"
+            ><path
+              d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2m0 5.1a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4m0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6m5.9-7.9a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0"
+            ></path></svg
+          >
+        </a>
+        <a
+          href={site.social.youtube}
+          class="text-white/60 transition hover:text-gold-400"
+          aria-label="YouTube"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5"
+            ><path
+              d="M21.6 7.2s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16 4.1 12 4.1 12 4.1s-4 0-6.8.2c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2.2 8.8 2.2 10.4v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.2.9 1.6.2 6.6.2 6.6.2s4 0 6.8-.2c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.5c0-1.6-.2-3.2-.2-3.2M9.9 14.3V8.9l5.2 2.7-5.2 2.7"
+            ></path></svg
+          >
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main bar -->
+  <div
+    id="main-bar"
+    class="border-b border-transparent bg-transparent transition-all duration-300"
+  >
+    <div class="shell flex h-20 items-center justify-between gap-6">
+      <Logo class="text-white" />
+
+      <nav class="hidden items-center gap-1 lg:flex" aria-label="Main">
+        {
+          nav.map((item) =>
+            item.children ? (
+              <div class="group/dd relative">
+                <a
+                  href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  class:list={[
+                    "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition",
+                    isActive(item.href)
+                      ? "text-gold-400"
+                      : "text-white/80 hover:text-white",
+                  ]}
+                >
+                  {item.label}
+                  <svg
+                    viewBox="0 0 12 12"
+                    class="h-2.5 w-2.5 transition-transform duration-200 group-hover/dd:rotate-180"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M2 4.5 6 8.5l4-4" />
+                  </svg>
+                </a>
+
+                <div class="invisible absolute left-0 top-full w-64 translate-y-2 pt-3 opacity-0 transition-all duration-200 group-hover/dd:visible group-hover/dd:translate-y-0 group-hover/dd:opacity-100 group-focus-within/dd:visible group-focus-within/dd:translate-y-0 group-focus-within/dd:opacity-100">
+                  <div class="overflow-hidden rounded-2xl border border-navy-100 bg-white p-2 shadow-e3">
+                    {item.children.map((child) => (
+                      <a
+                        href={child.href}
+                        class="block rounded-xl px-4 py-2.5 text-sm text-navy-800 transition hover:bg-gold-50 hover:text-gold-800"
+                      >
+                        {child.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <a
+                href={item.href}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                class:list={[
+                  "rounded-full px-4 py-2 text-sm font-medium transition",
+                  isActive(item.href)
+                    ? "text-gold-400"
+                    : "text-white/80 hover:text-white",
+                ]}
+              >
+                {item.label}
+              </a>
+            ),
+          )
+        }
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="/give" class="btn-gold hidden !px-6 !py-2.5 sm:inline-flex">
+          Give
+        </a>
+
+        <button
+          id="menu-toggle"
+          type="button"
+          class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400 lg:hidden"
+          aria-label="Open menu"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            class="h-5 w-5"
+            aria-hidden="true"
+          >
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile drawer -->
+<div
+  id="mobile-menu"
+  class="invisible fixed inset-0 z-[60] opacity-0 transition-all duration-300 lg:hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Site menu"
+>
+  <div id="menu-scrim" class="absolute inset-0 bg-navy-950/70 backdrop-blur-sm">
+  </div>
+
+  <div
+    id="menu-panel"
+    class="absolute inset-y-0 right-0 flex w-full max-w-sm translate-x-full flex-col bg-navy-900 shadow-e3 transition-transform duration-300 ease-out"
+  >
+    <div class="flex h-20 items-center justify-between px-6">
+      <Logo class="text-white" withWordmark={false} />
+      <button
+        id="menu-close"
+        type="button"
+        class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+        aria-label="Close menu"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          class="h-5 w-5"
+          aria-hidden="true"
+        >
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-6 py-4" aria-label="Mobile">
+      {
+        nav.map((item) => (
+          <div class="border-b border-white/10 py-1">
+            <a
+              href={item.href}
+              class:list={[
+                "block py-3 font-display text-2xl transition",
+                isActive(item.href)
+                  ? "text-gold-400"
+                  : "text-white hover:text-gold-300",
+              ]}
+            >
+              {item.label}
+            </a>
+            {item.children && (
+              <div class="pb-3 pl-1">
+                {item.children.map((child) => (
+                  <a
+                    href={child.href}
+                    class="block py-1.5 text-sm text-white/60 transition hover:text-gold-300"
+                  >
+                    {child.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        ))
+      }
+    </nav>
+
+    <div class="px-6 pb-8 pt-4">
+      <a href="/give" class="btn-gold w-full">Give</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- Header state on scroll -------------------------------------------
+  // At the top the header is transparent over the hero; once scrolled it
+  // becomes a solid navy bar and the utility strip collapses.
+  const header = document.getElementById("site-header");
+  const strip = document.getElementById("utility-strip");
+  const bar = document.getElementById("main-bar");
+
+  if (header && bar) {
+    let ticking = false;
+
+    const update = () => {
+      const scrolled = window.scrollY > 24;
+      header.dataset.atTop = String(!scrolled);
+      bar.classList.toggle("bg-navy-950/95", scrolled);
+      bar.classList.toggle("backdrop-blur-md", scrolled);
+      bar.classList.toggle("border-white/10", scrolled);
+      bar.classList.toggle("border-transparent", !scrolled);
+      if (strip) {
+        strip.classList.toggle("!h-0", scrolled);
+        strip.classList.toggle("opacity-0", scrolled);
+      }
+      ticking = false;
+    };
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      },
+      { passive: true },
+    );
+
+    update();
+  }
+
+  // --- Mobile drawer -----------------------------------------------------
+  const menu = document.getElementById("mobile-menu");
+  const panel = document.getElementById("menu-panel");
+  const openBtn = document.getElementById("menu-toggle");
+  const closeBtn = document.getElementById("menu-close");
+  const scrim = document.getElementById("menu-scrim");
+
+  if (menu && panel && openBtn) {
+    const setOpen = (open: boolean) => {
+      menu.classList.toggle("invisible", !open);
+      menu.classList.toggle("opacity-0", !open);
+      panel.classList.toggle("translate-x-full", !open);
+      openBtn.setAttribute("aria-expanded", String(open));
+      document.body.style.overflow = open ? "hidden" : "";
+      if (open) {
+        // move focus into the drawer so keyboard users aren't left behind
+        closeBtn?.focus();
+      } else {
+        openBtn.focus();
+      }
+    };
+
+    openBtn.addEventListener("click", () => setOpen(true));
+    closeBtn?.addEventListener("click", () => setOpen(false));
+    scrim?.addEventListener("click", () => setOpen(false));
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !menu.classList.contains("invisible")) {
+        setOpen(false);
+      }
+    });
+  }
+</script>

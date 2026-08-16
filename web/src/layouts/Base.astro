@@ -1,0 +1,120 @@
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { site } from "../data/site";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Per-page social share image. Falls back to the brand banner. */
+  ogImage?: string;
+}
+
+const {
+  title,
+  description = site.description,
+  ogImage = "/og-default.jpg",
+} = Astro.props;
+
+// Every legacy page shipped `<title>K.O.G</title>` and an identical meta
+// description, so search results and shared links were indistinguishable.
+const fullTitle = `${title} | ${site.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://welm.org");
+const ogUrl = new URL(ogImage, canonical);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="canonical" href={canonical.href} />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#05091f" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.legalName} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={ogUrl.href} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl.href} />
+
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Church",
+        name: site.legalName,
+        alternateName: site.name,
+        slogan: site.tagline,
+        email: site.email,
+        url: canonical.origin,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: site.address.street,
+          addressLocality: site.address.city,
+          addressCountry: site.address.country,
+        },
+        sameAs: Object.values(site.social),
+      })}
+    />
+  </head>
+
+  <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-gold-500 focus:px-6 focus:py-3 focus:text-sm focus:font-semibold focus:text-navy-950"
+    >
+      Skip to content
+    </a>
+
+    <Header />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script>
+      // Reveal-on-scroll. The hidden state is only applied once this script
+      // runs (via the .js-reveal class), so with JS off or broken nothing is
+      // ever stranded invisible.
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      if (!reduced.matches) {
+        document.documentElement.classList.add("js-reveal");
+
+        const targets = document.querySelectorAll("[data-reveal]");
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              const el = entry.target as HTMLElement;
+              const delay = Number(el.dataset.revealDelay ?? 0);
+              setTimeout(() => el.classList.add("is-visible"), delay);
+              observer.unobserve(el);
+            });
+          },
+          { rootMargin: "0px 0px -10% 0px", threshold: 0.1 },
+        );
+
+        targets.forEach((el) => observer.observe(el));
+
+        // Safety net: never leave content hidden if the observer misfires.
+        setTimeout(() => {
+          targets.forEach((el) => el.classList.add("is-visible"));
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>

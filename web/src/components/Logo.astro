@@ -1,0 +1,38 @@
+---
+import LogoMark from "../assets/logo-mark.svg";
+
+/**
+ * The crown-and-sword mark, inlined via Astro's SVG import so it inherits
+ * `currentColor` — gold on navy in the header, navy on paper elsewhere,
+ * from one file.
+ */
+interface Props {
+  class?: string;
+  withWordmark?: boolean;
+}
+const { class: className = "", withWordmark = true } = Astro.props;
+---
+
+<a
+  href="/"
+  class:list={["group inline-flex items-center gap-3", className]}
+  aria-label="Kingdom of Gods — Words of Eternal Life Ministries, home"
+>
+  <LogoMark
+    class="h-11 w-11 shrink-0 text-gold-500 transition-transform duration-300 group-hover:scale-105"
+    aria-hidden="true"
+  />
+
+  {
+    withWordmark && (
+      <span class="flex flex-col leading-none">
+        <span class="font-display text-[0.95rem] font-semibold tracking-[0.14em] uppercase">
+          Kingdom of Gods
+        </span>
+        <span class="mt-1.5 text-[0.58rem] font-medium tracking-[0.2em] uppercase opacity-65">
+          Words of Eternal Life
+        </span>
+      </span>
+    )
+  }
+</a>

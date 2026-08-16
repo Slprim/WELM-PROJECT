@@ -1,0 +1,235 @@
+@import "tailwindcss";
+
+/* Self-hosted variable fonts — no external requests, nothing render-blocking.
+   The legacy site pulled three separate Google Fonts stylesheets per page. */
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/montserrat";
+
+/* ============================================================================
+   W.E.L.M / KINGDOM OF GODS — DESIGN TOKENS
+
+   Palette source of truth is the ministry's own logo, sampled directly:
+     navy #001870   gold #DFB163
+   The legacy CSS used #252531 (a purple-leaning charcoal) as its dark colour,
+   which is not in the brand mark. Gold is unchanged; the dark family is now
+   built on the real navy. See --color-charcoal-* to revert that decision.
+   ========================================================================= */
+
+@theme {
+  /* --- Navy: the brand dark. 600 is the exact logo navy. ---------------- */
+  --color-navy-50: #eef1fa;
+  --color-navy-100: #d6ddf2;
+  --color-navy-200: #a8b6e0;
+  --color-navy-300: #6d82cc;
+  --color-navy-400: #3b54b0;
+  --color-navy-500: #1a3290;
+  --color-navy-600: #001870; /* ← sampled from the logo */
+  --color-navy-700: #0e1755;
+  --color-navy-800: #0b1240;
+  --color-navy-900: #080d2b;
+  --color-navy-950: #05091f;
+
+  /* --- Gold: the brand accent. 500 is the existing brand gold. ---------- */
+  --color-gold-50: #fdf9f0;
+  --color-gold-100: #f9efd9;
+  --color-gold-200: #f2dfb6;
+  --color-gold-300: #eacd90;
+  --color-gold-400: #e4bf77;
+  --color-gold-500: #dfb163; /* ← unchanged brand gold */
+  --color-gold-600: #c89a4a;
+  --color-gold-700: #a87c36;
+  /* Gold that is legible as small text on white. #DFB163 on white is 2.0:1
+     and fails WCAG; this is 5.4:1 and passes AA. Never use gold-500 for body
+     copy on a light surface. */
+  --color-gold-800: #8a6320;
+  --color-gold-900: #6b4c18;
+
+  /* --- Neutrals: warmed very slightly so they sit with the gold --------- */
+  --color-sand-50: #fbfaf8;
+  --color-sand-100: #f5f3ef;
+  --color-sand-200: #e9e5de;
+  --color-sand-300: #d5cfc4;
+  --color-sand-400: #a89f92;
+  --color-sand-500: #7d7469;
+  --color-sand-600: #5c554c;
+  --color-sand-700: #423d36;
+
+  /* --- Retained from the legacy palette, for reference/rollback --------- */
+  --color-charcoal: #252531;
+
+  /* --- Type ------------------------------------------------------------ */
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, serif;
+  --font-sans: "Montserrat Variable", "Montserrat", system-ui, sans-serif;
+
+  /* Display scale — fluid, so headlines hold their proportions from a
+     360px phone up to a 1600px desktop without breakpoint jumps. */
+  --text-display-2xl: clamp(2.75rem, 1.2rem + 6.8vw, 7rem);
+  --text-display-xl: clamp(2.25rem, 1.1rem + 5vw, 5rem);
+  --text-display-lg: clamp(1.875rem, 1.1rem + 3.4vw, 3.5rem);
+  --text-display-md: clamp(1.5rem, 1rem + 2.2vw, 2.5rem);
+
+  /* --- Elevation: one light source, tinted with the navy ---------------- */
+  --shadow-e1: 0 1px 2px rgb(5 9 31 / 0.06), 0 2px 8px rgb(5 9 31 / 0.05);
+  --shadow-e2: 0 2px 4px rgb(5 9 31 / 0.06), 0 10px 24px rgb(5 9 31 / 0.09);
+  --shadow-e3: 0 6px 12px rgb(5 9 31 / 0.08), 0 24px 56px rgb(5 9 31 / 0.14);
+  --shadow-gold: 0 8px 28px rgb(168 124 54 / 0.30);
+
+  /* --- Motion ---------------------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================= */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* the sticky header would otherwise sit over anchor targets */
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-sand-50);
+    color: var(--color-sand-700);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--color-navy-900);
+    /* Fraunces reads best for display with soft curves and no wonk */
+    font-variation-settings: "SOFT" 30, "WONK" 0;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Keyboard focus was invisible across the entire legacy site.
+     This is the accessibility floor, not a nice-to-have. */
+  :focus-visible {
+    outline: 2px solid var(--color-gold-600);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--color-gold-500);
+    color: var(--color-navy-950);
+  }
+
+  /* Respect the OS setting rather than animating regardless. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ============================================================================
+   COMPONENT PRIMITIVES
+   Kept deliberately few. Everything else composes from utilities.
+   ========================================================================= */
+
+/* The shared button base is registered as a real utility (rather than a
+   plain class in @layer components) so the variants below can @apply it —
+   Tailwind v4 only lets @apply consume registered utilities. */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full
+         px-7 py-3.5 text-sm font-semibold tracking-wide
+         transition-all duration-200 ease-out;
+}
+
+@layer components {
+  /* --- Buttons --------------------------------------------------------- */
+  .btn-gold {
+    @apply btn bg-gold-500 text-navy-950 hover:bg-gold-400
+           hover:-translate-y-0.5 active:translate-y-0;
+    box-shadow: var(--shadow-gold);
+  }
+
+  .btn-navy {
+    @apply btn bg-navy-600 text-white hover:bg-navy-500
+           hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/25 text-white
+           hover:border-gold-500 hover:text-gold-300;
+  }
+
+  .btn-outline {
+    @apply btn border border-navy-900/15 text-navy-900
+           hover:border-gold-600 hover:text-gold-800 hover:bg-gold-50;
+  }
+
+  /* --- Eyebrow label: small caps over a gold hairline ------------------- */
+  .eyebrow {
+    @apply inline-flex items-center gap-3 text-xs font-semibold
+           uppercase tracking-[0.22em];
+  }
+  .eyebrow::before {
+    content: "";
+    @apply block h-px w-8 bg-gold-500;
+  }
+
+  /* --- Card ------------------------------------------------------------ */
+  .card {
+    @apply relative overflow-hidden rounded-2xl bg-white
+           border border-sand-200 transition-all duration-300;
+    box-shadow: var(--shadow-e1);
+  }
+  .card:hover {
+    box-shadow: var(--shadow-e2);
+    @apply -translate-y-1 border-gold-200;
+  }
+
+  /* --- Section rhythm -------------------------------------------------- */
+  .section {
+    @apply py-20 sm:py-28 lg:py-36;
+  }
+
+  .shell {
+    @apply mx-auto w-full max-w-[78rem] px-5 sm:px-8;
+  }
+}
+
+/* ============================================================================
+   SCROLL REVEAL
+   Elements start hidden only once JS confirms it is running (the .js-reveal
+   class is added by the script), so with JS disabled nothing is ever stuck
+   invisible — the failure mode of the previous implementation.
+   ========================================================================= */
+
+@layer utilities {
+  .js-reveal [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  .js-reveal [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 700ms var(--ease-out-soft),
+      transform 700ms var(--ease-out-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js-reveal [data-reveal] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
