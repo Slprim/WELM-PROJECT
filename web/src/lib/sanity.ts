@@ -1,5 +1,5 @@
 import { createClient, type SanityClient } from "@sanity/client";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 
 /**
  * Sanity connection.
@@ -20,13 +20,17 @@ export const client: SanityClient | null = enabled
       projectId,
       dataset,
       apiVersion: "2024-10-01",
-      // Static build: always read published content straight from the CDN.
-      useCdn: true,
+      // Deliberately NOT the CDN. These queries run once, at build time, and
+      // the CDN can serve content up to a minute stale — so a deploy fired
+      // straight after someone publishes could bake in the old copy and look
+      // like the CMS is broken. The live API is always current, and a static
+      // build makes only a handful of requests.
+      useCdn: false,
       perspective: "published",
     })
   : null;
 
-const builder = client ? imageUrlBuilder(client) : null;
+const builder = client ? createImageUrlBuilder(client) : null;
 
 export type SanityImage = {
   asset?: { _ref?: string; url?: string; metadata?: { dimensions?: { width: number; height: number } } };

@@ -13,6 +13,10 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Sanity project ID is public, not a secret. If it is ever unset the build
+  # still succeeds — the site falls back to the content in web/src/data/.
+  SANITY_PROJECT_ID = "oqhf83r1"
+  SANITY_DATASET = "production"
 
 # Long-lived caching for fingerprinted assets. Astro hashes everything in
 # _astro/, so these can never go stale.

@@ -1,57 +1,41 @@
 /**
- * Seeds a fresh Sanity dataset with the content already recovered from the
- * legacy site, so nobody has to retype it.
+ * Seeds the Sanity dataset with the content recovered from the legacy site,
+ * so none of it has to be retyped.
  *
- * Usage:
- *   cd studio
- *   npm install
- *   export SANITY_STUDIO_PROJECT_ID=<id>          # or set in .env
- *   export SANITY_WRITE_TOKEN=<editor token>      # sanity.io/manage → API → Tokens
- *   npm run seed
+ * Usage (from studio/):
+ *   npm run seed              # create missing documents, leave existing ones
+ *   npm run seed -- --replace # overwrite existing documents too
  *
- * Safe to re-run: every document uses a deterministic `_id` and
- * `createIfNotExists`, so existing records are left alone. Pass --replace to
- * overwrite them instead.
+ * Runs through `sanity exec --with-user-token`, which injects the token from
+ * `sanity login` into `getCliClient()`. That avoids having to hand-create an
+ * API token in sanity.io/manage — you are already authenticated.
  *
- * Images are NOT uploaded here — the media items reference artwork that
- * lives in the repo at img/Themes and img/Prgrms. Upload those through the
- * studio once and attach them; the text is the tedious part.
+ * Safe to re-run: every document has a deterministic `_id` and is written
+ * with createIfNotExists unless --replace is passed.
+ *
+ * Images are NOT uploaded here. The artwork lives in the repo at
+ * img/Themes/ and img/Prgrms/ — upload those through the studio once and
+ * attach them to the media items. The text is the tedious part.
  */
-import { createClient } from "@sanity/client";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join, resolve } from "node:path";
+import { createRequire } from "node:module";
 
-const projectId = process.env.SANITY_STUDIO_PROJECT_ID;
-const dataset = process.env.SANITY_STUDIO_DATASET ?? "production";
-const token = process.env.SANITY_WRITE_TOKEN;
+// `sanity/cli` is CommonJS-only. On Node 22+ `sanity exec` runs this file as
+// native ESM, and Node's lexer cannot detect that module's named exports, so
+// `import { getCliClient }` throws. Going through createRequire works on both
+// the native-ESM path and Sanity's own bundler.
+const require = createRequire(import.meta.url);
+const { getCliClient } = require("sanity/cli") as {
+  getCliClient: (opts: { apiVersion: string }) => any;
+};
+
 const replace = process.argv.includes("--replace");
 
-if (!projectId || !token) {
-  console.error(
-    "Missing SANITY_STUDIO_PROJECT_ID or SANITY_WRITE_TOKEN.\n" +
-      "Create the project with `npx sanity init --env`, then generate an\n" +
-      "Editor token at sanity.io/manage → API → Tokens.",
-  );
-  process.exit(1);
-}
+const client = getCliClient({ apiVersion: "2024-10-01" });
 
-const client = createClient({
-  projectId,
-  dataset,
-  token,
-  apiVersion: "2024-10-01",
-  useCdn: false,
-});
-
-const here = dirname(fileURLToPath(import.meta.url));
-const webData = join(here, "..", "..", "web", "src", "data");
-
-/**
- * The data files are TypeScript modules meant for Astro, so rather than
- * importing them (and dragging in image imports that only resolve inside
- * Vite) the seed reads the literals it needs directly.
- */
+// `sanity exec` runs with the studio directory as cwd.
+const webData = resolve(process.cwd(), "..", "web", "src", "data");
 const read = (file: string) => readFileSync(join(webData, file), "utf8");
 
 const slugify = (s: string) =>
@@ -60,7 +44,13 @@ const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-/** Pulls an exported array literal out of a data module via JSON-ish parse. */
+/**
+ * Pulls an exported array literal out of a data module.
+ *
+ * The data files are Astro-side TypeScript that import images, so they
+ * cannot simply be imported here — the image specifiers only resolve inside
+ * Vite. Reading the literal avoids dragging in that dependency.
+ */
 function extractArray(source: string, exportName: string): any[] {
   const start = source.indexOf(`export const ${exportName}`);
   if (start === -1) throw new Error(`export ${exportName} not found`);
@@ -80,10 +70,7 @@ function extractArray(source: string, exportName: string): any[] {
       }
     }
   }
-  const literal = source.slice(open, end + 1);
-  // The literals are plain data with trailing commas and unquoted keys.
-  // eslint-disable-next-line no-new-func
-  return new Function(`return (${literal});`)();
+  return new Function(`return (${source.slice(open, end + 1)});`)();
 }
 
 const aboutSrc = read("about.ts");
@@ -98,28 +85,28 @@ const services = extractArray(siteSrc, "services");
 const themes = extractArray(siteSrc, "themes");
 const posts = extractArray(postsSrc, "posts");
 
-const docs: any[] = [];
-
-docs.push({
-  _id: "siteSettings",
-  _type: "siteSettings",
-  name: "Kingdom of Gods",
-  legalName: "Words of Eternal Life Ministries",
-  tagline: "Building You Into The Fullness Of Christ",
-  vision: "That men will live like God",
-  missionStatement: "Helping many lay hold on eternal life",
-  description:
-    "Words of Eternal Life Ministries (Kingdom of Gods) — a church in Accra, Ghana building believers into the fullness of Christ.",
-  email: "wordsofeternalifemin@gmail.com",
-  phones: ["0545195648", "0549480591"],
-  addressStreet: "Cambridge Centre of Excellence, Dzorwulu",
-  addressCity: "Accra",
-  addressCountry: "Ghana",
-  facebook: "https://www.facebook.com/wordsofeternallifeministries",
-  instagram: "https://www.instagram.com/w_e_l_m/",
-  youtube: "https://www.youtube.com/@gracewordtv",
-  youtubeChannelId: "UCylwhCv0356yu2sIpuBwIYQ",
-});
+const docs: any[] = [
+  {
+    _id: "siteSettings",
+    _type: "siteSettings",
+    name: "Kingdom of Gods",
+    legalName: "Words of Eternal Life Ministries",
+    tagline: "Building You Into The Fullness Of Christ",
+    vision: "That men will live like God",
+    missionStatement: "Helping many lay hold on eternal life",
+    description:
+      "Words of Eternal Life Ministries (Kingdom of Gods) — a church in Accra, Ghana building believers into the fullness of Christ.",
+    email: "wordsofeternalifemin@gmail.com",
+    phones: ["0545195648", "0549480591"],
+    addressStreet: "Cambridge Centre of Excellence, Dzorwulu",
+    addressCity: "Accra",
+    addressCountry: "Ghana",
+    facebook: "https://www.facebook.com/wordsofeternallifeministries",
+    instagram: "https://www.instagram.com/w_e_l_m/",
+    youtube: "https://www.youtube.com/@gracewordtv",
+    youtubeChannelId: "UCylwhCv0356yu2sIpuBwIYQ",
+  },
+];
 
 services.forEach((s, i) =>
   docs.push({
@@ -182,8 +169,8 @@ themes.forEach((t) =>
     _type: "yearlyTheme",
     year: t.year,
     title: t.title,
-    subtitle: t.subtitle,
-    scripture: t.scripture,
+    ...(t.subtitle ? { subtitle: t.subtitle } : {}),
+    ...(t.scripture ? { scripture: t.scripture } : {}),
   }),
 );
 
@@ -194,9 +181,14 @@ posts.forEach((p) =>
     title: p.title,
     slug: { _type: "slug", current: p.slug },
     excerpt: p.excerpt,
-    scripture: p.scripture ?? undefined,
+    ...(p.scripture ? { scripture: p.scripture } : {}),
   }),
 );
+
+const counts = docs.reduce<Record<string, number>>((acc, d) => {
+  acc[d._type] = (acc[d._type] ?? 0) + 1;
+  return acc;
+}, {});
 
 const tx = client.transaction();
 for (const doc of docs) {
@@ -204,17 +196,20 @@ for (const doc of docs) {
   else tx.createIfNotExists(doc);
 }
 
-const counts = docs.reduce<Record<string, number>>((acc, d) => {
-  acc[d._type] = (acc[d._type] ?? 0) + 1;
-  return acc;
-}, {});
-
 try {
   await tx.commit();
-  console.log(`Seeded ${docs.length} documents into ${projectId}/${dataset}:`);
-  for (const [type, n] of Object.entries(counts)) console.log(`  ${n.toString().padStart(3)}  ${type}`);
-  if (!replace) console.log("\nExisting documents were left untouched. Use --replace to overwrite.");
+  console.log(
+    `\nSeeded ${docs.length} documents into ${client.config().projectId}/${client.config().dataset}:`,
+  );
+  for (const [type, n] of Object.entries(counts).sort()) {
+    console.log(`  ${String(n).padStart(3)}  ${type}`);
+  }
+  console.log(
+    replace
+      ? "\nExisting documents were overwritten."
+      : "\nExisting documents were left untouched. Re-run with -- --replace to overwrite.",
+  );
 } catch (error) {
-  console.error("Seed failed:", error);
+  console.error("\nSeed failed:", error);
   process.exit(1);
 }

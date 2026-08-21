@@ -15,36 +15,49 @@ two environment variables, not a rewrite.
 Creating the Sanity project requires a Sanity account, so this part cannot be
 automated — it needs someone to log in.
 
+**This is already done.** The project exists:
+
+| | |
+| --- | --- |
+| Project ID | `oqhf83r1` |
+| Dataset | `production` (public) |
+| Organisation | Words of Eternal Life Ministry |
+| Owner | thefathershousepulishing@gmail.com |
+
+On a fresh machine, `.env` will not be there — it is gitignored everywhere, so
+that nobody can later drop a secret into it and commit it by accident. Recreate
+it with the values above:
+
 ```bash
 cd studio
 npm install
-
-# Log in and create the project. This writes .env with the project ID.
 npx sanity login
-npx sanity init --env
 ```
 
-Choose **"Create new project"**, name it `Words of Eternal Life Ministries`,
-use the **production** dataset, and decline the sample schema — the schemas in
-`schemaTypes/` are already written.
+Then create `studio/.env` containing:
+
+```
+SANITY_STUDIO_PROJECT_ID="oqhf83r1"
+SANITY_STUDIO_DATASET="production"
+```
+
+Netlify does not need this file — the same values are set in `netlify.toml`.
 
 ### Load the existing content
 
 Everything recovered from the old site — the founding history, the ten
 articles of faith, the eight committee members, the seven services, the
-testimonies, the yearly themes and the six blog posts — can be loaded in one
-command rather than retyped.
-
-Generate an **Editor** token at [sanity.io/manage](https://sanity.io/manage)
-→ your project → API → Tokens, then:
+testimonies, the yearly themes and the six blog posts — loads in one command
+rather than being retyped:
 
 ```bash
-export SANITY_WRITE_TOKEN=<the token>
-npm run seed
+npm run seed              # create missing documents, leave existing ones alone
+npm run seed -- --replace # overwrite existing documents too
 ```
 
-That writes 44 documents. It is safe to re-run: existing documents are left
-alone unless you pass `--replace`.
+That writes **44 documents**. It runs through `sanity exec --with-user-token`,
+which reuses the credentials from `sanity login` — no API token to create by
+hand. Safe to re-run.
 
 **Images are not uploaded by the seed.** The artwork lives in the repo at
 `img/Themes/` and `img/Prgrms/`. Upload those through the studio once and
@@ -55,7 +68,7 @@ attach them to the media items.
 In `web/.env` (and in Netlify's environment variables):
 
 ```
-SANITY_PROJECT_ID=<the project id>
+SANITY_PROJECT_ID=oqhf83r1
 SANITY_DATASET=production
 ```
 
