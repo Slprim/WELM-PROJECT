@@ -2,11 +2,70 @@
 import { Image } from "astro:assets";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
+import SanityImage from "../components/SanityImage.astro";
 import { site } from "../data/site";
-import { mediaItems, series } from "../data/media";
+import { mediaItems as localItems, series } from "../data/media";
+import { getMediaItems, getPage } from "../lib/content";
 
-const featured = mediaItems[0];
-const rest = mediaItems.slice(1);
+const page = await getPage("sermons", {
+  eyebrow: "Media Library",
+  title: "Catch up on the word",
+  lede: "Every teaching, conference and theme the house has walked through — in one place.",
+  seoDescription: `Teachings, conferences and yearly themes from ${site.legalName} in ${site.address.city}.`,
+});
+
+/**
+ * Media comes from Sanity when anything is published there, otherwise from
+ * the items recovered from the legacy artwork. The two carry images
+ * differently — Sanity gives a CDN URL, the local set gives a bundled asset —
+ * so each item is tagged with which renderer to use.
+ */
+const remote = await getMediaItems();
+
+type Card = {
+  slug: string;
+  title: string;
+  kind: string;
+  series: string;
+  speaker: string | null;
+  dateLabel: string;
+  scripture: string | null;
+  summary: string | null;
+  url: string | null;
+  remoteImage: { url: string | null; alt?: string | null; width?: number | null; height?: number | null } | null;
+  localImage: ImageMetadata | null;
+};
+
+const cards: Card[] = remote
+  ? remote.map((m) => ({
+      slug: m.slug,
+      title: m.title,
+      kind: m.kind,
+      series: m.series,
+      speaker: m.speaker,
+      dateLabel: m.dateLabel ?? (m.date ? new Date(m.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "Undated"),
+      scripture: m.scripture,
+      summary: m.summary,
+      url: m.url,
+      remoteImage: m.image ?? null,
+      localImage: null,
+    }))
+  : localItems.map((m) => ({
+      slug: m.slug,
+      title: m.title,
+      kind: m.kind,
+      series: m.series,
+      speaker: m.speaker,
+      dateLabel: m.dateLabel,
+      scripture: m.scripture,
+      summary: m.summary,
+      url: m.url,
+      remoteImage: null,
+      localImage: m.image,
+    }));
+
+const featured = cards[0];
+const rest = cards.slice(1);
 
 const kindLabel: Record<string, string> = {
   video: "Video",
@@ -15,15 +74,8 @@ const kindLabel: Record<string, string> = {
 };
 ---
 
-<Base
-  title="Media Library"
-  description={`Teachings, conferences and yearly themes from ${site.legalName} in ${site.address.city}. Watch, listen and catch up on what the house is hearing.`}
->
-  <PageHeader
-    eyebrow="Media Library"
-    title="Catch up on the word"
-    lede="Every teaching, conference and theme the house has walked through — in one place."
-  />
+<Base title={page.title} description={page.seoDescription}>
+  <PageHeader eyebrow={page.eyebrow} title={page.title} lede={page.lede} />
 
   {/* ==================================================================
       FEATURED
@@ -36,15 +88,28 @@ const kindLabel: Record<string, string> = {
         data-parallax-root
       >
         <div class="relative min-h-[22rem] overflow-hidden lg:min-h-[30rem]">
-          <Image
-            src={featured.image}
-            alt={featured.title}
-            class="absolute inset-0 h-full w-full object-cover"
-            widths={[480, 800, 1200]}
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            loading="eager"
-            data-parallax
-          />
+          {
+            featured.remoteImage?.url ? (
+              <SanityImage
+                image={featured.remoteImage}
+                alt={featured.remoteImage.alt ?? featured.title}
+                class="absolute inset-0 h-full w-full object-cover"
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                loading="eager"
+                fetchpriority="high"
+              />
+            ) : featured.localImage ? (
+              <Image
+                src={featured.localImage}
+                alt={featured.title}
+                class="absolute inset-0 h-full w-full object-cover"
+                widths={[480, 800, 1200]}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                loading="eager"
+                data-parallax
+              />
+            ) : null
+          }
           <div
             class="absolute inset-0 bg-gradient-to-t from-navy-950/70 to-transparent lg:bg-gradient-to-r"
           >
@@ -60,9 +125,7 @@ const kindLabel: Record<string, string> = {
           </h2>
           {
             featured.summary && (
-              <p class="mt-5 leading-relaxed text-white/70">
-                {featured.summary}
-              </p>
+              <p class="mt-5 leading-relaxed text-white/70">{featured.summary}</p>
             )
           }
           <dl class="mt-8 flex flex-wrap gap-x-10 gap-y-4 text-sm">
@@ -81,12 +144,15 @@ const kindLabel: Record<string, string> = {
           </dl>
 
           <div class="mt-10 flex flex-wrap gap-3">
-            {/* No fake player: the button only appears once a real media URL
-                exists on the record. */}
             {
               featured.url ? (
-                <a href={featured.url} class="btn-gold">
-                  Watch now
+                <a
+                  href={featured.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-gold"
+                >
+                  {featured.kind === "audio" ? "Listen now" : "Watch now"}
                 </a>
               ) : (
                 <span class="btn border border-white/15 text-white/50">
@@ -94,7 +160,12 @@ const kindLabel: Record<string, string> = {
                 </span>
               )
             }
-            <a href={site.social.youtube} class="btn-ghost" target="_blank" rel="noopener noreferrer">
+            <a
+              href={site.social.youtube}
+              class="btn-ghost"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Watch on YouTube
             </a>
           </div>
@@ -132,8 +203,11 @@ const kindLabel: Record<string, string> = {
         </div>
       </div>
 
-      <!-- Series filter -->
-      <div class="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filter by series">
+      <div
+        class="mt-8 flex flex-wrap gap-2"
+        role="group"
+        aria-label="Filter by series"
+      >
         <button
           type="button"
           class="media-filter rounded-full border border-navy-900/15 px-5 py-2 text-sm transition"
@@ -156,59 +230,91 @@ const kindLabel: Record<string, string> = {
         }
       </div>
 
-      <!-- Grid -->
       <div class="mt-12 grid gap-7 sm:grid-cols-2 lg:grid-cols-3" data-media-grid>
         {
-          rest.map((item, i) => (
-            <article
-              class="card group flex flex-col"
-              data-reveal="scale"
-              data-reveal-delay={i % 3 === 1 ? "100" : i % 3 === 2 ? "180" : undefined}
-              data-series={item.series}
-              data-title={item.title.toLowerCase()}
-              data-speaker={(item.speaker ?? "").toLowerCase()}
-            >
-              <div class="relative aspect-[4/3] overflow-hidden">
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  widths={[320, 560, 800]}
-                  sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-                  loading="lazy"
-                />
-                <span class="absolute left-4 top-4 rounded-full bg-navy-950/80 px-3 py-1 text-[0.65rem] uppercase tracking-[0.15em] text-gold-300 backdrop-blur-sm">
-                  {kindLabel[item.kind]}
-                </span>
-              </div>
+          rest.map((item, i) => {
+            // A card with a link is a real link; one without stays a plain
+            // article rather than an anchor that goes nowhere.
+            const Tag = item.url ? "a" : "article";
+            return (
+              <Tag
+                class="card group flex flex-col"
+                data-reveal="scale"
+                data-reveal-delay={
+                  i % 3 === 1 ? "100" : i % 3 === 2 ? "180" : undefined
+                }
+                data-series={item.series}
+                data-title={item.title.toLowerCase()}
+                data-speaker={(item.speaker ?? "").toLowerCase()}
+                {...(item.url
+                  ? { href: item.url, target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+              >
+                <div class="relative aspect-[4/3] overflow-hidden">
+                  {item.remoteImage?.url ? (
+                    <SanityImage
+                      image={item.remoteImage}
+                      alt={item.remoteImage.alt ?? item.title}
+                      class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+                    />
+                  ) : item.localImage ? (
+                    <Image
+                      src={item.localImage}
+                      alt={item.title}
+                      class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      widths={[320, 560, 800]}
+                      sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+                      loading="lazy"
+                    />
+                  ) : null}
 
-              <div class="flex flex-1 flex-col p-7">
-                <p class="text-[0.65rem] uppercase tracking-[0.18em] text-gold-800">
-                  {item.series}
-                </p>
-                <h3 class="mt-3 font-display text-2xl font-light leading-snug text-navy-900">
-                  {item.title}
-                </h3>
-                {item.scripture && (
-                  <p class="mt-2 text-sm italic text-sand-500">
-                    {item.scripture}
-                  </p>
-                )}
-                {item.summary && (
-                  <p class="mt-3 text-sm leading-relaxed text-sand-600">
-                    {item.summary}
-                  </p>
-                )}
+                  <span class="absolute left-4 top-4 rounded-full bg-navy-950/80 px-3 py-1 text-[0.65rem] uppercase tracking-[0.15em] text-gold-300 backdrop-blur-sm">
+                    {kindLabel[item.kind] ?? item.kind}
+                  </span>
 
-                <div class="mt-auto flex items-center justify-between gap-4 pt-6 text-sm">
-                  <span class="text-sand-500">{item.dateLabel}</span>
-                  {item.speaker && (
-                    <span class="text-right text-sand-500">{item.speaker}</span>
+                  {item.url && (
+                    <span
+                      class="absolute inset-0 grid place-items-center bg-navy-950/45 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      aria-hidden="true"
+                    >
+                      <span class="grid h-16 w-16 place-items-center rounded-full border-2 border-gold-400 text-gold-400">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="ml-1 h-6 w-6">
+                          <path d="M7 4l12 8-12 8z" />
+                        </svg>
+                      </span>
+                    </span>
                   )}
                 </div>
-              </div>
-            </article>
-          ))
+
+                <div class="flex flex-1 flex-col p-7">
+                  <p class="text-[0.65rem] uppercase tracking-[0.18em] text-gold-800">
+                    {item.series}
+                  </p>
+                  <h3 class="mt-3 font-display text-2xl font-light leading-snug text-navy-900 transition group-hover:text-gold-800">
+                    {item.title}
+                  </h3>
+                  {item.scripture && (
+                    <p class="mt-2 text-sm italic text-sand-500">
+                      {item.scripture}
+                    </p>
+                  )}
+                  {item.summary && (
+                    <p class="mt-3 text-sm leading-relaxed text-sand-600">
+                      {item.summary}
+                    </p>
+                  )}
+
+                  <div class="mt-auto flex items-center justify-between gap-4 pt-6 text-sm">
+                    <span class="text-sand-500">{item.dateLabel}</span>
+                    {item.speaker && (
+                      <span class="text-right text-sand-500">{item.speaker}</span>
+                    )}
+                  </div>
+                </div>
+              </Tag>
+            );
+          })
         }
       </div>
 
@@ -218,16 +324,46 @@ const kindLabel: Record<string, string> = {
       >
         Nothing matches that search yet.
       </p>
+    </div>
+  </section>
 
-      {/* Honest about the state of the data rather than padding the grid
-          with invented sermons. */}
-      <p class="mt-16 rounded-2xl border border-sand-300 bg-sand-50 p-6 text-sm leading-relaxed text-sand-600">
-        <strong class="text-navy-900">A note on this page:</strong> every item
-        above is taken from the ministry's own published artwork. Individual
-        sermon recordings, dates and speakers will populate here once the
-        media library is connected — nothing has been invented to fill the
-        grid.
-      </p>
+  {/* ==================================================================
+      KOG RADIO — carried over from the legacy Media Library page
+      ================================================================== */}
+  <section class="section bg-navy-950 text-white">
+    <div class="shell">
+      <div class="grid items-center gap-12 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <p class="eyebrow text-gold-400" data-reveal="left">On air</p>
+          <h2
+            class="mt-7 font-display text-display-lg font-light leading-[1.05] text-white"
+            data-reveal="left"
+            data-reveal-delay="80"
+          >
+            K.O.G Radio
+          </h2>
+          <p
+            class="mt-7 leading-relaxed text-white/70"
+            data-reveal="left"
+            data-reveal-delay="160"
+          >
+            The ministry's own station, streaming around the clock. Godhood, the
+            live radio broadcast with Dr. Faith Joseph, goes out every Monday.
+          </p>
+        </div>
+
+        <div class="lg:col-span-7" data-reveal="right">
+          <div class="overflow-hidden rounded-3xl border border-white/10 bg-navy-900 p-2">
+            <iframe
+              src="https://zeno.fm/player/kingdom-of-gods-radio"
+              title="K.O.G Radio live stream"
+              class="h-[220px] w-full rounded-2xl"
+              loading="lazy"
+              frameborder="0"
+              scrolling="no"></iframe>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </Base>
@@ -245,7 +381,10 @@ const kindLabel: Record<string, string> = {
   const emptyEl = document.querySelector("[data-empty-state]");
 
   if (grid) {
-    const cards = Array.from(grid.querySelectorAll<HTMLElement>("article"));
+    // Cards are <a> when they link out and <article> when they do not.
+    const cards = Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-series]"),
+    );
     let activeSeries = "all";
 
     const apply = () => {
@@ -273,9 +412,7 @@ const kindLabel: Record<string, string> = {
     filters.forEach((btn) => {
       btn.addEventListener("click", () => {
         activeSeries = btn.dataset.filter ?? "all";
-        filters.forEach((b) =>
-          b.setAttribute("aria-pressed", String(b === btn)),
-        );
+        filters.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
         apply();
       });
     });
@@ -294,5 +431,9 @@ const kindLabel: Record<string, string> = {
   .media-filter[aria-pressed="false"]:hover {
     border-color: var(--color-gold-600);
     color: var(--color-gold-800);
+  }
+  /* `hidden` must win over the card's flex display when filtering. */
+  [data-media-grid] [hidden] {
+    display: none !important;
   }
 </style>

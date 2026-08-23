@@ -1,0 +1,70 @@
+---
+/**
+ * Renders an image that came from Sanity.
+ *
+ * Sanity's CDN does the resizing and format conversion, so this builds a
+ * srcset against it rather than making Astro download and re-encode every
+ * asset at build time. That keeps builds fast and means a newly uploaded
+ * image is live on the next build without a cache round trip.
+ *
+ * `width` and `height` come from Sanity's own asset metadata and are always
+ * set, so the browser reserves the right box and the page never jumps as
+ * images load.
+ */
+export type SanityImageData = {
+  url: string | null;
+  alt?: string | null;
+  width?: number | null;
+  height?: number | null;
+};
+
+interface Props {
+  image: SanityImageData | null | undefined;
+  /** Falls back to the image's own alt text from the CMS. */
+  alt?: string;
+  class?: string;
+  sizes?: string;
+  widths?: number[];
+  loading?: "lazy" | "eager";
+  fetchpriority?: "high" | "auto" | "low";
+}
+
+const {
+  image,
+  alt,
+  class: className,
+  sizes = "100vw",
+  widths = [400, 700, 1000, 1400],
+  loading = "lazy",
+  fetchpriority,
+} = Astro.props;
+
+const src = image?.url ?? null;
+
+/** Appends Sanity's transform params to the asset URL. */
+const at = (width: number) =>
+  `${src}?w=${width}&auto=format&fit=max`;
+
+const srcset = src ? widths.map((w) => `${at(w)} ${w}w`).join(", ") : undefined;
+
+// Alt text is required for meaning; an empty string is the correct value for
+// a decorative image, so `??` is used rather than `||`.
+const altText = alt ?? image?.alt ?? "";
+---
+
+{
+  src && (
+    <img
+      src={at(widths[widths.length - 1])}
+      srcset={srcset}
+      sizes={sizes}
+      width={image?.width ?? undefined}
+      height={image?.height ?? undefined}
+      alt={altText}
+      class={className}
+      loading={loading}
+      decoding="async"
+      fetchpriority={fetchpriority}
+    />
+  )
+}

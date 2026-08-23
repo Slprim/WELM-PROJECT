@@ -1,11 +1,21 @@
 ---
+import { Image } from "astro:assets";
 import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
-import { getCommittee } from "../../lib/content";
+import SanityImage from "../../components/SanityImage.astro";
+import { getCommitteeWithPhotos, getPage } from "../../lib/content";
+import { portraits } from "../../data/people";
 
-const committee = await getCommittee();
+const committee = await getCommitteeWithPhotos();
+const page = await getPage("central-committee", {
+  eyebrow: "Central Committee",
+  title: "The governing body of the ministry",
+  lede: "Constituted in 2019 to oversee the work of the house.",
+  seoDescription:
+    "The Central Committee is the governing body of Words of Eternal Life Ministries, constituted in 2019.",
+});
 
-/** Initials stand in until the client supplies portraits for each member. */
+/** Initials are the last resort, for anyone with no portrait at all. */
 const initials = (name: string) =>
   name
     .replace(/^(Dr\.|Pastor|Mrs|Mr\.?|Prophet)\s+/i, "")
@@ -13,50 +23,78 @@ const initials = (name: string) =>
     .slice(0, 2)
     .map((w) => w[0])
     .join("");
+
+/**
+ * Three sources, in order of preference: a portrait uploaded to Sanity, the
+ * photo carried over from the legacy site, then initials.
+ */
+const withPhoto = committee.map((member) => ({
+  ...member,
+  local: portraits[member.name] ?? null,
+}));
 ---
 
-<Base
-  title="Central Committee"
-  description="The Central Committee is the governing body of Words of Eternal Life Ministries, constituted in 2019."
->
-  <PageHeader
-    eyebrow="Central Committee"
-    title="The governing body of the ministry"
-    lede="Constituted in 2019 to oversee the work of the house."
-  />
+<Base title={page.title} description={page.seoDescription}>
+  <PageHeader eyebrow={page.eyebrow} title={page.title} lede={page.lede} />
 
   <section class="section bg-sand-50">
     <div class="shell">
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
         {
-          committee.map((member, i) => (
+          withPhoto.map((member, i) => (
             <article
-              class="card flex items-center gap-5 p-7"
+              class="card group overflow-hidden"
               data-reveal="scale"
               data-reveal-delay={
-                i % 3 === 1 ? "100" : i % 3 === 2 ? "180" : undefined
+                i % 4 === 1
+                  ? "80"
+                  : i % 4 === 2
+                    ? "160"
+                    : i % 4 === 3
+                      ? "240"
+                      : undefined
               }
             >
-              <span
-                class="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-navy-950 font-display text-xl font-light text-gold-400"
-                aria-hidden="true"
-              >
-                {initials(member.name)}
-              </span>
-              <div>
-                <h2 class="font-display text-xl font-light leading-snug text-navy-900">
-                  {member.name}
-                </h2>
-                <p class="mt-1 text-sm text-sand-500">{member.role}</p>
+              <div class="relative aspect-[3/4] overflow-hidden bg-navy-900">
+                {member.photo?.url ? (
+                  <SanityImage
+                    image={member.photo}
+                    alt={member.photo.alt ?? member.name}
+                    class="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    sizes="(min-width: 1024px) 24vw, (min-width: 640px) 45vw, 100vw"
+                  />
+                ) : member.local ? (
+                  <Image
+                    src={member.local}
+                    alt={member.name}
+                    class="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    widths={[280, 460, 700]}
+                    sizes="(min-width: 1024px) 24vw, (min-width: 640px) 45vw, 100vw"
+                    loading={i < 4 ? "eager" : "lazy"}
+                  />
+                ) : (
+                  <span
+                    class="grid h-full w-full place-items-center font-display text-5xl font-light text-gold-400"
+                    aria-hidden="true"
+                  >
+                    {initials(member.name)}
+                  </span>
+                )}
+                <div
+                  class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-navy-950/85 to-transparent"
+                  aria-hidden="true"
+                />
+                <div class="absolute inset-x-0 bottom-0 p-5">
+                  <h2 class="font-display text-xl font-light leading-snug text-white">
+                    {member.name}
+                  </h2>
+                  <p class="mt-1 text-sm text-gold-300">{member.role}</p>
+                </div>
               </div>
             </article>
           ))
         }
       </div>
-
-      <p class="mt-14 max-w-2xl text-sm leading-relaxed text-sand-500">
-        Portraits will replace the initials once the ministry supplies them.
-      </p>
     </div>
   </section>
 </Base>

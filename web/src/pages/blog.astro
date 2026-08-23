@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import { site } from "../data/site";
+import SanityImage from "../components/SanityImage.astro";
 import { getPosts } from "../lib/content";
 
 const posts = await getPosts();
@@ -26,7 +27,25 @@ const [lead, ...rest] = posts;
         class="grid overflow-hidden rounded-3xl border border-sand-200 bg-white lg:grid-cols-12"
         data-reveal
       >
-        <div class="bg-navy-950 p-9 lg:col-span-5 lg:p-12">
+        <div class="relative isolate overflow-hidden bg-navy-950 p-9 lg:col-span-5 lg:p-12">
+          {
+            lead.coverImage?.url && (
+              <>
+                <SanityImage
+                  image={lead.coverImage}
+                  alt={lead.coverImage.alt ?? ""}
+                  class="absolute inset-0 -z-10 h-full w-full object-cover"
+                  sizes="(min-width: 1024px) 42vw, 100vw"
+                  loading="eager"
+                  fetchpriority="high"
+                />
+                <div
+                  class="absolute inset-0 -z-10 bg-navy-950/70"
+                  aria-hidden="true"
+                />
+              </>
+            )
+          }
           <p class="eyebrow text-gold-400">Latest</p>
           <h2 class="mt-6 font-display text-display-md font-light leading-tight text-white">
             {lead.title}
@@ -47,12 +66,23 @@ const [lead, ...rest] = posts;
         {
           rest.map((post, i) => (
             <article
-              class="card flex flex-col p-8"
+              class="card group flex flex-col"
               data-reveal="scale"
               data-reveal-delay={
                 i % 3 === 1 ? "100" : i % 3 === 2 ? "180" : undefined
               }
             >
+              {post.coverImage?.url && (
+                <div class="aspect-[16/10] overflow-hidden">
+                  <SanityImage
+                    image={post.coverImage}
+                    alt={post.coverImage.alt ?? ""}
+                    class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+                  />
+                </div>
+              )}
+              <div class="flex flex-1 flex-col p-8">
               <h2 class="font-display text-2xl font-light leading-snug text-navy-900">
                 {post.title}
               </h2>
@@ -64,6 +94,7 @@ const [lead, ...rest] = posts;
               <p class="mt-4 flex-1 leading-relaxed text-sand-600">
                 {post.excerpt}
               </p>
+              </div>
               {/* No "Read more" link: the legacy ones went nowhere, and
                   there is no fuller body to link to yet. */}
             </article>

@@ -24,6 +24,38 @@ const useOr = <T>(remote: T[] | null, local: T[]): T[] =>
 
 export { enabled as cmsEnabled };
 
+export type PageHeading = {
+  title: string;
+  eyebrow?: string;
+  lede?: string;
+  seoDescription?: string;
+};
+
+/**
+ * The editable heading block for one page.
+ *
+ * `fallback` is what the page shipped with, so a page still renders correctly
+ * if the CMS is off or that document has not been created. Individual fields
+ * fall back too — clearing the intro paragraph in the CMS should remove it,
+ * but an absent document should not blank the heading.
+ */
+export async function getPage(
+  id: string,
+  fallback: PageHeading = { title: "" },
+): Promise<PageHeading> {
+  const remote = await query<PageHeading | null>(
+    `*[_type == "page" && _id == $id][0]{ title, eyebrow, lede, seoDescription }`,
+    { id: `page-${id}` },
+  );
+  if (!remote) return fallback;
+  return {
+    title: remote.title || fallback.title,
+    eyebrow: remote.eyebrow ?? fallback.eyebrow,
+    lede: remote.lede ?? fallback.lede,
+    seoDescription: remote.seoDescription ?? fallback.seoDescription,
+  };
+}
+
 export async function getSiteSettings() {
   const remote = await query<{
     name?: string;
@@ -122,14 +154,89 @@ export async function getThemes(): Promise<Theme[]> {
   return useOr(remote, localThemes.map((t) => ({ ...t })) as Theme[]);
 }
 
-export async function getPosts(): Promise<Post[]> {
-  const remote = await query<Post[]>(
+/** The image projection reused by every query that returns one. */
+const IMAGE_FIELDS = `{
+  "url": asset->url,
+  "alt": alt,
+  "width": asset->metadata.dimensions.width,
+  "height": asset->metadata.dimensions.height
+}`;
+
+export type PostWithCover = Post & {
+  coverImage?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+export async function getPosts(): Promise<PostWithCover[]> {
+  const remote = await query<PostWithCover[]>(
     `*[_type == "post"] | order(coalesce(publishedAt, _createdAt) desc) {
        "slug": slug.current, title, excerpt, scripture,
-       "date": publishedAt, "author": author->name
+       "date": publishedAt, "author": author->name,
+       coverImage ${IMAGE_FIELDS}
      }`,
   );
   return useOr(remote, localPosts);
+}
+
+export type MediaItemRemote = {
+  slug: string;
+  title: string;
+  kind: string;
+  series: string;
+  speaker: string | null;
+  date: string | null;
+  dateLabel: string | null;
+  scripture: string | null;
+  summary: string | null;
+  url: string | null;
+  featured: boolean;
+  image?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+/**
+ * Media library. Returns null rather than falling back, because the local
+ * items carry bundled `ImageMetadata` imports that the Sanity shape cannot
+ * stand in for — the page picks one source or the other.
+ */
+export async function getMediaItems(): Promise<MediaItemRemote[] | null> {
+  const remote = await query<MediaItemRemote[]>(
+    `*[_type == "sermon"] | order(featured desc, coalesce(date, "1900-01-01") desc) {
+       "slug": slug.current, title, kind, series,
+       "speaker": speaker->name, date, dateLabel, scripture, summary, url,
+       "featured": coalesce(featured, false),
+       image ${IMAGE_FIELDS}
+     }`,
+  );
+  return remote && remote.length > 0 ? remote : null;
+}
+
+export type CommitteeMember = {
+  name: string;
+  role: string;
+  photo?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+export async function getCommitteeWithPhotos(): Promise<CommitteeMember[]> {
+  const remote = await query<CommitteeMember[]>(
+    `*[_type == "person" && onCommittee == true] | order(order asc) {
+       name, role, "photo": photo ${IMAGE_FIELDS}
+     }`,
+  );
+  return useOr(remote, localCommittee as CommitteeMember[]);
 }
 
 export async function getFaqs() {

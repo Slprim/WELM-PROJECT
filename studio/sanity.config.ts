@@ -2,6 +2,7 @@ import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
 import { schemaTypes } from "./schemaTypes";
+import { structure } from "./structure";
 
 /**
  * Sanity Studio for Words of Eternal Life Ministries.
@@ -14,7 +15,7 @@ const projectId = process.env.SANITY_STUDIO_PROJECT_ID ?? "";
 const dataset = process.env.SANITY_STUDIO_DATASET ?? "production";
 
 /** Documents there should only ever be one of. */
-const SINGLETONS = new Set(["siteSettings"]);
+const SINGLETONS = new Set(["siteSettings", "page"]);
 
 export default defineConfig({
   name: "welm",
@@ -23,32 +24,7 @@ export default defineConfig({
   dataset,
 
   plugins: [
-    structureTool({
-      structure: (S) =>
-        S.list()
-          .title("Content")
-          .items([
-            // Singleton: opens the one document directly rather than a list
-            S.listItem()
-              .title("Site settings")
-              .id("siteSettings")
-              .child(
-                S.document().schemaType("siteSettings").documentId("siteSettings"),
-              ),
-            S.divider(),
-            S.documentTypeListItem("service").title("Services & gatherings"),
-            S.documentTypeListItem("sermon").title("Media library"),
-            S.documentTypeListItem("post").title("Blog posts"),
-            S.divider(),
-            S.documentTypeListItem("person").title("People"),
-            S.documentTypeListItem("testimony").title("Testimonies"),
-            S.divider(),
-            S.documentTypeListItem("historyEvent").title("History timeline"),
-            S.documentTypeListItem("faithArticle").title("Statement of faith"),
-            S.documentTypeListItem("yearlyTheme").title("Yearly themes"),
-            S.documentTypeListItem("faq").title("FAQs"),
-          ]),
-    }),
+    structureTool({ structure }),
     visionTool(),
   ],
 

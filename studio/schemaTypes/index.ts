@@ -1,4 +1,5 @@
 import siteSettings from "./siteSettings";
+import page from "./page";
 import service from "./service";
 import sermon from "./sermon";
 import post from "./post";
@@ -12,6 +13,7 @@ import faq from "./faq";
 export const schemaTypes = [
   // Singletons
   siteSettings,
+  page,
   // Collections
   service,
   sermon,
