@@ -2,9 +2,13 @@
 import { Image } from "astro:assets";
 import Base from "../layouts/Base.astro";
 import HeroCarousel from "../components/HeroCarousel.astro";
-import { site, services } from "../data/site";
+import ImageSlideshow from "../components/ImageSlideshow.astro";
+import { site } from "../data/site";
+import { getServices } from "../lib/content";
+import { rhythmImages } from "../data/rhythm";
 import pastorImage from "../assets/pastor-faith-joseph.jpg";
-import congregationImage from "../assets/congregation.jpg";
+
+const services = await getServices();
 
 const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
 const daily = services.filter((s) => s.where === "Clubhouse");
@@ -96,20 +100,21 @@ const gatherings = services.filter((s) => s.where === "In person");
         <article
           class="group relative isolate overflow-hidden rounded-3xl lg:col-span-2 lg:row-span-2"
           data-reveal
-          data-parallax-root
         >
-          {/* Parallax replaces the hover-scale here — the two would fight
-              over the same transform. The card's overflow-hidden crops the
-              1.1 scale the drift needs. */}
-          <Image
-            src={congregationImage}
-            alt="The congregation gathered for a Sunday service"
-            class="absolute inset-0 -z-10 h-full w-full object-cover"
-            widths={[640, 1024, 1400]}
-            sizes="(min-width: 1024px) 66vw, 100vw"
-            loading="lazy"
-            data-parallax
-          />
+          {/* Photos come from the Sunday service record in Sanity when any
+              are uploaded, otherwise from the legacy highlight set. Two or
+              more and they crossfade on their own. Parallax is dropped here:
+              it and the slideshow would fight over the same transform. */}
+          <div class="absolute inset-0 -z-10">
+            <ImageSlideshow
+              remote={sunday.images}
+              local={rhythmImages}
+              alt="The congregation gathered for a Sunday service"
+              class="object-cover"
+              sizes="(min-width: 1024px) 66vw, 100vw"
+              interval={5000}
+            />
+          </div>
           <div
             class="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/70 to-transparent"
           >

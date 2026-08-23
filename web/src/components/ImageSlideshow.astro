@@ -1,0 +1,146 @@
+---
+import { Image } from "astro:assets";
+import SanityImage, { type SanityImageData } from "./SanityImage.astro";
+
+/**
+ * A background slideshow that crossfades between images on its own.
+ *
+ * Used behind the feature cards on the home page. Deliberately quieter than
+ * the hero carousel: no arrows or dots, because it sits behind text and is
+ * decorative — the card is readable whichever frame is showing.
+ *
+ * Accepts either Sanity images or bundled local ones, so a card keeps
+ * working before anything is uploaded to the CMS.
+ *
+ * With one image it renders a plain picture and ships no timer at all.
+ */
+interface Props {
+  remote?: SanityImageData[] | null;
+  local?: ImageMetadata[] | null;
+  alt: string;
+  class?: string;
+  sizes?: string;
+  /** Milliseconds each image holds before the next fades in. */
+  interval?: number;
+  loading?: "lazy" | "eager";
+}
+
+const {
+  remote,
+  local,
+  alt,
+  class: className = "",
+  sizes = "100vw",
+  interval = 5000,
+  loading = "lazy",
+} = Astro.props;
+
+const remoteImages = (remote ?? []).filter((i) => i?.url);
+const localImages = local ?? [];
+const count = remoteImages.length || localImages.length;
+const animated = count > 1;
+---
+
+<div
+  class="slideshow absolute inset-0"
+  data-slideshow={animated ? "" : undefined}
+  data-interval={interval}
+>
+  {
+    remoteImages.length > 0
+      ? remoteImages.map((image, i) => (
+          <SanityImage
+            image={image}
+            alt={image.alt ?? (i === 0 ? alt : "")}
+            class={`slide absolute inset-0 h-full w-full ${className}`}
+            sizes={sizes}
+            loading={i === 0 ? loading : "lazy"}
+          />
+        ))
+      : localImages.map((image, i) => (
+          <Image
+            src={image}
+            alt={i === 0 ? alt : ""}
+            class={`slide absolute inset-0 h-full w-full ${className}`}
+            widths={[640, 1024, 1400]}
+            sizes={sizes}
+            loading={i === 0 ? loading : "lazy"}
+          />
+        ))
+  }
+</div>
+
+<style>
+  /* `:global` is required, not incidental. The frames are rendered by the
+     child image components, so they carry those components' scope hashes,
+     not this one's — a plain `.slide` rule here matches nothing at all and
+     every frame stays at full opacity, stacked on top of the others. */
+  .slideshow :global(.slide) {
+    opacity: 0;
+    transition: opacity 1200ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  /* Before the script adds `.is-running`, frame one stands alone — so the
+     card is never blank with JS off or still loading. */
+  .slideshow:not(.is-running) :global(.slide:first-child) {
+    opacity: 1;
+  }
+
+  .slideshow :global(.slide.is-active) {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slideshow :global(.slide) {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const shows = document.querySelectorAll<HTMLElement>("[data-slideshow]");
+
+  shows.forEach((show) => {
+    const slides = Array.from(show.querySelectorAll<HTMLElement>(".slide"));
+    if (slides.length < 2) return;
+
+    // Decorative motion: if the viewer asked for less of it, show frame one
+    // and never start a timer.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const interval = Number(show.dataset.interval) || 5000;
+    let index = 0;
+    let timer: number | undefined;
+
+    show.classList.add("is-running");
+    slides[0].classList.add("is-active");
+
+    const tick = () => {
+      slides[index].classList.remove("is-active");
+      index = (index + 1) % slides.length;
+      slides[index].classList.add("is-active");
+    };
+
+    const start = () => {
+      stop();
+      timer = window.setInterval(tick, interval);
+    };
+    const stop = () => {
+      if (timer) window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    // Only run while the card is actually on screen, and never in a
+    // background tab.
+    const observer = new IntersectionObserver(
+      ([entry]) => (entry.isIntersecting ? start() : stop()),
+      { threshold: 0.1 },
+    );
+    observer.observe(show);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stop();
+      else if (show.getBoundingClientRect().top < window.innerHeight) start();
+    });
+  });
+</script>

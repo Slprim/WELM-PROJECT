@@ -63,6 +63,19 @@ hand. Safe to re-run.
 `img/Themes/` and `img/Prgrms/`. Upload those through the studio once and
 attach them to the media items.
 
+### Load the legacy images
+
+Two one-off scripts pull artwork out of the old site and attach it, so the
+Studio is not starting from empty:
+
+```bash
+npm run upload:service-images   # 6 Sunday photos -> the home page slideshow
+npm run upload:blog-covers      # original cover art -> the 6 blog posts
+```
+
+Both skip anything that already has images, so a photo uploaded by hand in the
+Studio is never overwritten. Add `-- --replace` to override that.
+
 ### Point the website at the CMS
 
 In `web/.env` (and in Netlify's environment variables):

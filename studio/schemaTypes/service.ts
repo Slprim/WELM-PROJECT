@@ -35,6 +35,29 @@ export default defineType({
     }),
     defineField({ name: "note", type: "text", rows: 2, title: "One-line description" }),
     defineField({
+      name: "images",
+      title: "Card images",
+      type: "array",
+      description:
+        "Photos shown on this service's card on the home page. Add two or more and they scroll automatically. One image just sits still. Drag to reorder.",
+      of: [
+        {
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({
+              name: "alt",
+              type: "string",
+              title: "Alt text",
+              description: "Describe the photo for screen readers.",
+              validation: (r) => r.required(),
+            }),
+          ],
+        },
+      ],
+      options: { layout: "grid" },
+    }),
+    defineField({
       name: "order",
       title: "Sort order",
       type: "number",

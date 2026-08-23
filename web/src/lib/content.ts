@@ -104,11 +104,28 @@ export async function getSiteSettings() {
   };
 }
 
-export async function getServices(): Promise<Service[]> {
-  const remote = await query<Service[]>(
-    `*[_type == "service"] | order(order asc) { name, when, time, where, note }`,
+export type ServiceWithImages = Service & {
+  images?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  }[];
+};
+
+export async function getServices(): Promise<ServiceWithImages[]> {
+  const remote = await query<ServiceWithImages[]>(
+    `*[_type == "service"] | order(order asc) {
+       name, when, time, where, note,
+       "images": images[]{
+         "url": asset->url,
+         "alt": alt,
+         "width": asset->metadata.dimensions.width,
+         "height": asset->metadata.dimensions.height
+       }
+     }`,
   );
-  return useOr(remote, localServices as unknown as Service[]);
+  return useOr(remote, localServices as unknown as ServiceWithImages[]);
 }
 
 export async function getHistory() {
