@@ -15,7 +15,7 @@ cost of this hosting choice.
 In `web/.env`:
 
 ```
-SITE_URL=https://your-domain.com
+SITE_URL=https://kingdomofgods.org
 SANITY_PROJECT_ID=oqhf83r1
 SANITY_DATASET=production
 ```
@@ -75,7 +75,7 @@ Fill it in with your **test** keys first:
 
 ```php
 'secret_key'   => 'sk_test_…',
-'callback_url' => 'https://your-domain.com/give/thank-you/',
+'callback_url' => 'https://kingdomofgods.org/give/thank-you/',
 'notify_email' => 'wordsofeternalifemin@gmail.com',
 ```
 
@@ -94,7 +94,7 @@ files target 7.4 deliberately, so anything from 7.4 to 8.3 works. Make sure
 Paystack Dashboard → Settings → API Keys & Webhooks → **Webhook URL**:
 
 ```
-https://your-domain.com/api/paystack/webhook.php
+https://kingdomofgods.org/api/paystack/webhook.php
 ```
 
 The webhook is the only trustworthy confirmation that money moved — the

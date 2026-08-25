@@ -17,11 +17,11 @@ return [
     'currency' => 'GHS',
 
     // Where Paystack sends the giver after checkout.
-    'callback_url' => 'https://YOUR-DOMAIN/give/thank-you/',
+    'callback_url' => 'https://kingdomofgods.org/give/thank-you/',
 
     // Optional: emailed whenever a gift is received.
     'notify_email' => '',
-    'mail_from' => 'no-reply@YOUR-DOMAIN',
+    'mail_from' => 'no-reply@kingdomofgods.org',
 
     // Written by webhook.php. Keep it above the web root.
     'log_file' => __DIR__ . '/paystack-giving.log',

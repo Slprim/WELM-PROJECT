@@ -10,7 +10,7 @@ export default defineConfig({
   // The public domain. Set SITE_URL in web/.env (and before any production
   // build) to the Namecheap domain — it is what the sitemap and robots.txt
   // are written against, and canonical/OG tags point at.
-  site: process.env.SITE_URL || 'https://welm.org',
+  site: process.env.SITE_URL || 'https://kingdomofgods.org',
 
   image: {
     // Sanity serves uploaded images from its own CDN; Astro will only
