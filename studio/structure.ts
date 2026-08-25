@@ -37,6 +37,8 @@ export const structure: StructureResolver = (S) =>
             .title("Home page")
             .items([
               pageHeader(S, "home"),
+              S.documentTypeListItem("heroSlide")
+                .title("Slides: big carousel at the top"),
               S.documentTypeListItem("yearlyTheme")
                 .title('Section: "Theme of the year"'),
               S.documentTypeListItem("monthlyTheme")
@@ -133,7 +135,10 @@ export const structure: StructureResolver = (S) =>
                 (series) =>
                   S.listItem()
                     .title(`  ${series}`)
-                    .id(`series-${series}`)
+                    // Node ids may not contain spaces — "series-Yearly Theme"
+                    // broke the whole Studio with "Structure node id cannot
+                    // contain character". Slugify before using as an id.
+                    .id(`series-${series.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`)
                     .child(
                       S.documentList()
                         .title(series)

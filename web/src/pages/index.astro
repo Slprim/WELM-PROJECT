@@ -11,6 +11,7 @@ import {
   getMonthlyThemes,
   getThemes,
   getProgrammes,
+  getHeroSlides,
 } from "../lib/content";
 import { rhythmImages } from "../data/rhythm";
 import pastorImage from "../assets/pastor-faith-joseph.jpg";
@@ -19,6 +20,7 @@ const services = await getServices();
 const monthlyThemes = await getMonthlyThemes();
 const yearlyThemes = await getThemes();
 const programmes = await getProgrammes();
+const heroSlides = await getHeroSlides();
 
 const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
 const daily = services.filter((s) => s.where === "Online");
@@ -29,7 +31,7 @@ const gatherings = services.filter((s) => s.where === "In person");
   title="Home"
   description={`${site.legalName} — ${site.tagline}. Join us in ${site.address.city} on Sundays at 8am, or online every day.`}
 >
-  <HeroCarousel />
+  <HeroCarousel slides={heroSlides} />
   {/* ==================================================================
       VISION
       ================================================================== */}

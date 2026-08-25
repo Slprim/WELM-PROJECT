@@ -12,6 +12,7 @@ import faq from "./faq";
 import galleryImage from "./galleryImage";
 import monthlyTheme from "./monthlyTheme";
 import programme from "./programme";
+import heroSlide from "./heroSlide";
 
 export const schemaTypes = [
   // Singletons
@@ -30,4 +31,5 @@ export const schemaTypes = [
   galleryImage,
   monthlyTheme,
   programme,
+  heroSlide,
 ];

@@ -4,7 +4,10 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import { pastor } from "../../data/about";
 import pastorImage from "../../assets/pastor-faith-joseph.jpg";
-import { getPage } from "../../lib/content";
+import SanityImage from "../../components/SanityImage.astro";
+import { getPage, getPerson } from "../../lib/content";
+
+const person = await getPerson(pastor.knownAs);
 
 const facts = [
   ["Full name", pastor.fullName],
@@ -42,14 +45,30 @@ const page = await getPage("pastor", {
               aria-hidden="true"
             >
             </div>
-            <Image
-              src={pastorImage}
-              alt="Pastor Faith Joseph"
-              class="w-full rounded-2xl object-cover shadow-e3"
-              widths={[480, 760, 1100]}
-              sizes="(min-width: 1024px) 40vw, 100vw"
-              loading="eager"
-            />
+            {/* The portrait comes from the person record in Sanity when one
+                is uploaded, so it is editable like everything else; the
+                bundled photo stands in until then. */}
+            {
+              person?.photo?.url ? (
+                <SanityImage
+                  image={person.photo}
+                  alt={person.photo.alt ?? pastor.knownAs}
+                  class="w-full rounded-2xl object-cover shadow-e3"
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  loading="eager"
+                  fetchpriority="high"
+                />
+              ) : (
+                <Image
+                  src={pastorImage}
+                  alt={pastor.knownAs}
+                  class="w-full rounded-2xl object-cover shadow-e3"
+                  widths={[480, 760, 1100]}
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  loading="eager"
+                />
+              )
+            }
           </div>
         </div>
 

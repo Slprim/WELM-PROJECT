@@ -391,3 +391,53 @@ export async function getProgrammes(): Promise<Programme[]> {
   );
   return remote ?? [];
 }
+
+export type HeroSlide = {
+  mediaType: "image" | "video";
+  eyebrow?: string | null;
+  title: string;
+  accent?: string | null;
+  body?: string | null;
+  videoUrl?: string | null;
+  image?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+/**
+ * Slides for the home page hero.
+ *
+ * Returns an empty array when nothing is published, and the carousel keeps
+ * its built-in slides — the shipped video and captions — so the top of the
+ * home page is never blank.
+ */
+export async function getHeroSlides(): Promise<HeroSlide[]> {
+  const remote = await query<HeroSlide[]>(
+    `*[_type == "heroSlide"] | order(order asc) {
+       mediaType, eyebrow, title, accent, body,
+       "videoUrl": video.asset->url,
+       image ${IMAGE_FIELDS}
+     }`,
+  );
+  return remote ?? [];
+}
+
+/** One person by name — used for the pastor's portrait and details. */
+export async function getPerson(name: string) {
+  return await query<{
+    name: string;
+    role?: string | null;
+    photo?: {
+      url: string | null;
+      alt?: string | null;
+      width?: number | null;
+      height?: number | null;
+    } | null;
+  } | null>(
+    `*[_type == "person" && name == $name][0]{ name, role, "photo": photo ${IMAGE_FIELDS} }`,
+    { name },
+  );
+}
