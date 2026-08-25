@@ -1,4 +1,9 @@
-# Netlify deploy config.
+# Netlify deploy config — NOT the current deploy target.
+#
+# The site is hosted on Namecheap cPanel; see DEPLOY.md. This file is kept
+# because moving to Netlify later is a realistic option (it would restore
+# automatic rebuilds when staff publish in Sanity), and it costs nothing to
+# leave ready. Ignore it unless that move happens.
 #
 # The Astro app lives in web/ while the legacy static site stays at the repo
 # root as a reference, so `base` points Netlify at the subdirectory.

@@ -1,0 +1,94 @@
+# Apache config for cPanel shared hosting.
+#
+# Astro builds to directory-style URLs (/about/index.html), which Apache
+# serves at /about on its own. What it does not do by default is force HTTPS,
+# serve the custom 404, compress text, or cache the fingerprinted assets — so
+# that is what this file is for.
+
+# ---------------------------------------------------------------------------
+# HTTPS + canonical host
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS. cPanel terminates TLS upstream on some plans, so check the
+  # forwarded header too or this loops forever.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Strip www so pages are not indexed under two hostnames.
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+  # Serve /about for /about/ without an extra redirect hop.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}/index.html -f
+  RewriteRule ^(.*)$ /$1/index.html [L]
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Custom error page
+# ---------------------------------------------------------------------------
+ErrorDocument 404 /404.html
+
+# ---------------------------------------------------------------------------
+# Compression — the biggest single win on a shared host
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+  AddOutputFilterByType DEFLATE application/json application/xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Caching
+# ---------------------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Astro fingerprints everything in /_astro, so it can never go stale.
+  <FilesMatch "\.(js|css|woff2|woff)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/avif "access plus 1 month"
+  ExpiresByType video/mp4 "access plus 1 week"
+
+  # HTML must revalidate, or a content update stays invisible for a month.
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  # ---------------------------------------------------------------------------
+  # Security headers
+  # ---------------------------------------------------------------------------
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+  # Never let the Paystack config be served, even if it ends up in the webroot.
+  <FilesMatch "config\.php$">
+    Header set Cache-Control "no-store"
+  </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Block access to anything sensitive
+# ---------------------------------------------------------------------------
+<FilesMatch "^(paystack-config\.php|\.env.*|.*\.log)$">
+  Require all denied
+</FilesMatch>
+
+# Directory listings off.
+Options -Indexes

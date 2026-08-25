@@ -39,35 +39,23 @@ something new, **you will not see it** — you have to run `npm run build`
 again. That is almost certainly what happened when the cover image did not
 appear.
 
-## 3. On the live site — make it automatic
+## 3. On the live site
 
-Once the repo is connected to Netlify, publishing in Sanity should rebuild and
-redeploy on its own. Two steps, one time:
-
-**a. Get a build hook from Netlify**
-
-Site configuration → Build & deploy → Build hooks → *Add build hook*. Name it
-`Sanity publish`, branch `main`. Netlify gives you a URL like:
-
-```
-https://api.netlify.com/build_hooks/abc123def456
-```
-
-**b. Point Sanity at it**
+The site is on Namecheap cPanel hosting, which has no build server — so this
+step is manual. After publishing in Sanity:
 
 ```bash
-cd studio
-npx sanity hook create \
-  --name "Rebuild site on publish" \
-  --url "https://api.netlify.com/build_hooks/abc123def456" \
-  --dataset production \
-  --trigger create --trigger update --trigger delete
+cd web
+npm run build
 ```
 
-From then on: publish in Studio → Netlify rebuilds → the change is live in a
-minute or two.
+…then upload `dist/` to `public_html/`. Full steps in [DEPLOY.md](DEPLOY.md).
 
-Check it is working with `npx sanity hook list` and `npx sanity hook logs`.
+**Nothing you publish appears on the live site until someone does that.** It
+is the one real cost of shared hosting over a platform like Netlify, where a
+publish would trigger a rebuild automatically. If the re-uploading becomes a
+chore, moving is a one-afternoon change — see the note at the end of
+DEPLOY.md.
 
 ---
 
@@ -93,6 +81,6 @@ Two things to know when uploading:
 | --- | --- |
 | Writing content, want to see it now | `npm run dev` in `web/`, refresh |
 | Checking the real build | `npm run build` then `npm run preview` |
-| Published, live site unchanged | It needs a rebuild — set up the webhook above |
+| Published, live site unchanged | It needs a rebuild and re-upload — see DEPLOY.md |
 | Image uploaded but not showing | Same: rebuild. Check alt text is filled in. |
 | Changed something, want it undone | Sanity keeps document history — open the doc and use the revision list |

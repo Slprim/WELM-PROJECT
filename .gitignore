@@ -28,3 +28,7 @@ Thumbs.db
 
 # Stray byte-identical duplicate of img/Log/ — kept out of the repo.
 /Log/
+
+# Paystack secret config — must never be committed. Lives above the web root.
+paystack-config.php
+paystack-giving.log

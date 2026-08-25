@@ -1,0 +1,67 @@
+---
+import Base from "../../layouts/Base.astro";
+import { site } from "../../data/site";
+
+/**
+ * Where Paystack sends the giver after checkout.
+ *
+ * This page deliberately does NOT claim the payment succeeded. The redirect
+ * fires whatever the outcome, and can be reached by typing the URL, so
+ * treating it as proof of payment would be wrong. The webhook is what
+ * actually confirms money moved; this page just closes the loop politely and
+ * tells them the receipt is the real record.
+ */
+---
+
+<Base
+  title="Thank you"
+  description={`Thank you for giving to ${site.legalName}.`}
+>
+  <section class="relative isolate flex min-h-[80svh] items-center overflow-hidden bg-navy-950">
+    <div
+      class="absolute inset-0 -z-10 opacity-[0.18]"
+      style="background-image: radial-gradient(circle at 20% 25%, #dfb163 0, transparent 45%), radial-gradient(circle at 80% 80%, #001870 0, transparent 45%);"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div class="shell py-28">
+      <div class="max-w-2xl">
+        <span
+          class="grid h-16 w-16 place-items-center rounded-full border-2 border-gold-500 text-gold-500"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            class="h-7 w-7"><path d="M20 6L9 17l-5-5"></path></svg
+          >
+        </span>
+
+        <h1
+          class="mt-9 font-display text-display-xl font-light leading-[0.95] text-white"
+        >
+          Thank you
+        </h1>
+
+        <p class="mt-8 text-lg leading-relaxed text-white/75">
+          Your giving supports the teaching, the outreach and the running of the
+          house. Paystack will email a receipt to the address you gave — that
+          receipt, not this page, is the record of your gift.
+        </p>
+
+        <p class="mt-5 leading-relaxed text-white/55">
+          If anything looks wrong, or no receipt arrives, contact the church
+          office and someone will check it for you.
+        </p>
+
+        <div class="mt-11 flex flex-wrap gap-4">
+          <a href="/" class="btn-gold">Back to the home page</a>
+          <a href="/contact" class="btn-ghost">Contact the office</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

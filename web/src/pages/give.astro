@@ -28,7 +28,16 @@ const funds = [
 
 const amounts = [50, 100, 200, 500, 1000];
 
-const PAYSTACK_READY = false;
+/**
+ * Giving turns on when a Paystack public key is present at build time.
+ * The SECRET key never appears here — it lives only in the PHP config above
+ * the web root, which the browser cannot reach. This flag exists purely so
+ * the page can say honestly whether payments are live.
+ */
+const PAYSTACK_READY = Boolean(import.meta.env.PUBLIC_PAYSTACK_PUBLIC_KEY);
+const PAYSTACK_MODE = String(
+  import.meta.env.PUBLIC_PAYSTACK_PUBLIC_KEY ?? "",
+).startsWith("pk_test") ? "test" : "live";
 
 const page = await getPage("give", {
   eyebrow: "Metadidomi",
@@ -68,8 +77,22 @@ const page = await getPage("give", {
                     Not yet taking payments
                   </strong>
                   This is the finished giving flow, waiting on the ministry's
-                  Paystack account. Once the account is approved and the keys
-                  are set, this form goes live without any redesign.
+                  Paystack keys. Once they are set, this form goes live
+                  without any redesign.
+                </div>
+              )
+            }
+
+            {
+              PAYSTACK_READY && PAYSTACK_MODE === "test" && (
+                <div
+                  class="mb-9 rounded-2xl border border-gold-300 bg-gold-50 p-5 text-sm leading-relaxed text-gold-900"
+                  role="status"
+                >
+                  <strong class="block text-navy-900">Test mode</strong>
+                  Paystack is running against test keys, so no real money moves
+                  and no card is charged. Use Paystack's test card
+                  4084 0840 8408 4081 to try the whole flow.
                 </div>
               )
             }
@@ -223,13 +246,22 @@ const page = await getPage("give", {
               </label>
             </fieldset>
 
+            <p
+              class="mt-8 hidden rounded-2xl bg-red-50 p-4 text-sm text-red-700"
+              data-request-error
+              role="alert"
+            >
+            </p>
+
             <button
               type="submit"
-              class="btn-gold mt-10 w-full !py-4 disabled:cursor-not-allowed disabled:opacity-50"
+              class="btn-gold mt-4 w-full !py-4 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!PAYSTACK_READY}
               data-give-submit
             >
-              {PAYSTACK_READY ? "Continue to payment" : "Giving opens soon"}
+              <span data-submit-label>
+                {PAYSTACK_READY ? "Continue to payment" : "Giving opens soon"}
+              </span>
             </button>
 
             <p class="mt-5 text-center text-xs leading-relaxed text-sand-500">
@@ -350,7 +382,9 @@ const page = await getPage("give", {
       amountError?.classList.add("hidden");
     });
 
-    form.addEventListener("submit", (e) => {
+    const requestError = form.querySelector("[data-request-error]");
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const amount = Number(custom?.value ?? 0);
@@ -370,9 +404,52 @@ const page = await getPage("give", {
       }
       if (!ok) return;
 
-      // Phase 4 wires this to POST /api/paystack/initialize, which creates
-      // the transaction server-side and returns an authorization_url to
-      // redirect to. Nothing here ever handles card details.
+      const button = form.querySelector<HTMLButtonElement>("[data-give-submit]");
+      const label = form.querySelector("[data-submit-label]");
+      const original = label?.textContent ?? "Continue to payment";
+
+      if (button) button.disabled = true;
+      if (label) label.textContent = "Taking you to Paystack…";
+      requestError?.classList.add("hidden");
+
+      try {
+        const fund =
+          form.querySelector<HTMLInputElement>('input[name="fund"]:checked')
+            ?.value ?? "offering";
+
+        const response = await fetch("/api/paystack/initialize.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount,
+            email: emailValue,
+            fund,
+            name: form.querySelector<HTMLInputElement>("#giver-name")?.value ?? "",
+            recurring:
+              form.querySelector<HTMLInputElement>("#recurring")?.checked ?? false,
+          }),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.authorization_url) {
+          throw new Error(data?.error ?? "Could not start the payment.");
+        }
+
+        // Paystack's hosted page takes it from here — card and mobile money
+        // details are entered there, never on this site.
+        window.location.href = data.authorization_url;
+      } catch (error) {
+        if (button) button.disabled = false;
+        if (label) label.textContent = original;
+        if (requestError) {
+          requestError.textContent =
+            error instanceof Error
+              ? error.message
+              : "Something went wrong. Please try again.";
+          requestError.classList.remove("hidden");
+        }
+      }
     });
   }
 </script>
