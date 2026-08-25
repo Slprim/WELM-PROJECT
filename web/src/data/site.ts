@@ -84,6 +84,7 @@ export const nav: NavItem[] = [
   },
   { label: "Live", href: "/live" },
   { label: "Sermons", href: "/sermons" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ];

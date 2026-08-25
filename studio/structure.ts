@@ -191,6 +191,17 @@ export const structure: StructureResolver = (S) =>
         ),
 
       S.listItem()
+        .title("Gallery page")
+        .child(
+          S.list()
+            .title("Gallery page")
+            .items([
+              pageHeader(S, "gallery"),
+              S.documentTypeListItem("galleryImage").title("The photos"),
+            ]),
+        ),
+
+      S.listItem()
         .title("Contact page")
         .child(S.list().title("Contact page").items([pageHeader(S, "contact")])),
 

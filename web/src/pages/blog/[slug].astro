@@ -1,0 +1,207 @@
+---
+import { toHTML } from "@portabletext/to-html";
+import Base from "../../layouts/Base.astro";
+import SanityImage from "../../components/SanityImage.astro";
+import { site } from "../../data/site";
+import { getPosts, getPost } from "../../lib/content";
+
+/**
+ * A blog post's own page.
+ *
+ * Routes are generated from whatever `getPosts()` returns, so this works
+ * against Sanity or the checked-in fallback set without changing.
+ *
+ * The imported posts carry only the short excerpt — the legacy "Read More"
+ * links went nowhere and there was no fuller text to import. Where a post
+ * has no body yet the page shows the excerpt on its own and says the rest is
+ * still to come, rather than rendering an article that stops mid-thought.
+ */
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+
+// Re-fetch so the body comes through; the index query omits it deliberately.
+const full = await getPost(post.slug);
+const body = (full?.body ?? []) as unknown[];
+
+const bodyHtml = body.length
+  ? toHTML(body as never, {
+      components: {
+        block: {
+          normal: ({ children }) =>
+            `<p class="mt-6 leading-relaxed text-sand-600">${children}</p>`,
+          h2: ({ children }) =>
+            `<h2 class="mt-12 font-display text-3xl font-light text-navy-900">${children}</h2>`,
+          h3: ({ children }) =>
+            `<h3 class="mt-10 font-display text-2xl font-light text-navy-900">${children}</h3>`,
+          blockquote: ({ children }) =>
+            `<blockquote class="mt-8 border-l-2 border-gold-500 pl-6 font-display text-xl font-light italic text-navy-800">${children}</blockquote>`,
+        },
+        list: {
+          bullet: ({ children }) =>
+            `<ul class="mt-6 space-y-2 pl-5 text-sand-600 [&>li]:list-disc">${children}</ul>`,
+          number: ({ children }) =>
+            `<ol class="mt-6 space-y-2 pl-5 text-sand-600 [&>li]:list-decimal">${children}</ol>`,
+        },
+        marks: {
+          link: ({ children, value }) =>
+            `<a href="${value?.href ?? "#"}" class="text-gold-800 underline underline-offset-2 hover:text-gold-600" rel="noopener noreferrer">${children}</a>`,
+          strong: ({ children }) =>
+            `<strong class="font-semibold text-navy-900">${children}</strong>`,
+        },
+      },
+    })
+  : null;
+
+const all = await getPosts();
+const more = all.filter((p) => p.slug !== post.slug).slice(0, 3);
+
+const published = post.date
+  ? new Date(post.date).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+  : null;
+---
+
+<Base
+  title={post.title}
+  description={post.excerpt.slice(0, 180)}
+>
+  {/* ===================== HEADER ===================== */}
+  <article>
+    <header class="relative isolate overflow-hidden bg-navy-950">
+      {
+        post.coverImage?.url && (
+          <>
+            <SanityImage
+              image={post.coverImage}
+              alt=""
+              class="absolute inset-0 -z-10 h-full w-full object-cover opacity-30"
+              sizes="100vw"
+              loading="eager"
+              fetchpriority="high"
+            />
+            <div
+              class="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950 via-navy-950/80 to-navy-950/60"
+              aria-hidden="true"
+            />
+          </>
+        )
+      }
+
+      <div class="shell pb-20 pt-40 sm:pb-24 sm:pt-44">
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 text-sm text-gold-400 transition hover:text-gold-300"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-4 w-4"
+            aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg
+          >
+          All posts
+        </a>
+
+        <h1
+          class="mt-8 max-w-4xl font-display text-display-xl font-light leading-[0.98] text-white"
+        >
+          {post.title}
+        </h1>
+
+        <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
+          {
+            post.scripture && (
+              <span class="italic text-gold-300">{post.scripture}</span>
+            )
+          }
+          {published && <span class="text-white/50">{published}</span>}
+          {post.author && <span class="text-white/50">{post.author}</span>}
+        </div>
+      </div>
+    </header>
+
+    {/* ===================== BODY ===================== */}
+    <div class="section bg-sand-50 pt-16">
+      <div class="shell">
+        <div class="mx-auto max-w-2xl">
+          <p
+            class="font-display text-2xl font-light leading-snug text-navy-800"
+          >
+            {post.excerpt}
+          </p>
+
+          {bodyHtml ? (
+            <div set:html={bodyHtml} />
+          ) : (
+            /* Saying the rest is unwritten beats padding it out. */
+            <p
+              class="mt-10 rounded-2xl border border-sand-300 bg-sand-100 p-6 text-sm leading-relaxed text-sand-600"
+            >
+              <strong class="text-navy-900">The full post is still to come.</strong
+              > This is the whole text the previous site carried for it. Add the
+              rest in the Studio under <em>Blog page → Cards → {post.title}</em
+              >{" "}and it will appear here.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* ===================== MORE ===================== */}
+    {
+      more.length > 0 && (
+        <section class="section bg-sand-100 pt-0">
+          <div class="shell">
+            <h2 class="font-display text-display-md font-light" data-reveal>
+              Keep reading
+            </h2>
+            <div class="mt-10 grid gap-7 md:grid-cols-3">
+              {more.map((p, i) => (
+                <a
+                  href={`/blog/${p.slug}`}
+                  class="card group flex flex-col"
+                  data-reveal="scale"
+                  data-reveal-delay={
+                    i === 1 ? "100" : i === 2 ? "180" : undefined
+                  }
+                >
+                  {p.coverImage?.url && (
+                    <div class="aspect-[16/10] overflow-hidden">
+                      <SanityImage
+                        image={p.coverImage}
+                        alt=""
+                        class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        sizes="(min-width: 768px) 30vw, 100vw"
+                      />
+                    </div>
+                  )}
+                  <div class="flex flex-1 flex-col p-7">
+                    <h3 class="font-display text-xl font-light leading-snug text-navy-900 transition group-hover:text-gold-800">
+                      {p.title}
+                    </h3>
+                    {p.scripture && (
+                      <p class="mt-2 text-sm italic text-gold-800">
+                        {p.scripture}
+                      </p>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )
+    }
+  </article>
+</Base>

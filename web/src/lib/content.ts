@@ -188,6 +188,21 @@ export type PostWithCover = Post & {
   } | null;
 };
 
+/** A single post, including the rich-text body for its own page. */
+export async function getPost(slug: string): Promise<
+  (PostWithCover & { body?: unknown[] }) | null
+> {
+  return await query<PostWithCover & { body?: unknown[] }>(
+    `*[_type == "post" && slug.current == $slug][0]{
+       "slug": slug.current, title, excerpt, scripture,
+       "date": publishedAt, "author": author->name,
+       body,
+       coverImage ${IMAGE_FIELDS}
+     }`,
+    { slug },
+  );
+}
+
 export async function getPosts(): Promise<PostWithCover[]> {
   const remote = await query<PostWithCover[]>(
     `*[_type == "post"] | order(coalesce(publishedAt, _createdAt) desc) {
@@ -280,4 +295,28 @@ export async function getFaqs(): Promise<FaqSets | null> {
     published: remote.filter((f) => f.published).map(({ q, a }) => ({ q, a })),
     unanswered: remote.filter((f) => !f.published).map((f) => f.q),
   };
+}
+
+export type GalleryPhoto = {
+  caption?: string | null;
+  image: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+/**
+ * Gallery photos. No local fallback: the legacy gallery pointed at six image
+ * files that are not in the repo, so there is nothing honest to fall back to.
+ * An empty list renders an empty state rather than broken tiles.
+ */
+export async function getGallery(): Promise<GalleryPhoto[]> {
+  const remote = await query<GalleryPhoto[]>(
+    `*[_type == "galleryImage"] | order(order asc) {
+       caption, image ${IMAGE_FIELDS}
+     }`,
+  );
+  return remote ?? [];
 }

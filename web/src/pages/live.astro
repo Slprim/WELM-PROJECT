@@ -1,8 +1,8 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
-import { site, services } from "../data/site";
-import { getPage } from "../lib/content";
+import { site } from "../data/site";
+import { getPage, getServices } from "../lib/content";
 
 /**
  * The legacy LiveStream page embedded two `youtube.com/embed/live_stream?
@@ -15,7 +15,8 @@ import { getPage } from "../lib/content";
  * Data API, which is Phase 3.
  */
 const channel = site.youtubeChannels.primary;
-const online = services.filter((s) => s.where === "Clubhouse");
+const services = await getServices();
+const online = services.filter((s) => s.where !== "In person");
 
 const page = await getPage("live", {
   eyebrow: "Live",

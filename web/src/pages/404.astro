@@ -1,0 +1,84 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../data/site";
+import { getServices } from "../lib/content";
+
+/**
+ * The legacy site had no 404 page, so a mistyped or dead link showed the
+ * host's default error. This one keeps people on the site and points at the
+ * three things a lost visitor most often wants.
+ */
+const services = await getServices();
+const sunday = services.find((s) => s.name.startsWith("Revelation"));
+
+const routes = [
+  ["Home", "/", "Start again from the beginning."],
+  ["Media Library", "/sermons", "Teachings, conferences and yearly themes."],
+  ["Live", "/live", "Join a service from wherever you are."],
+  ["Contact", "/contact", "Talk to a real person."],
+];
+---
+
+<Base
+  title="Page not found"
+  description={`That page does not exist on the ${site.legalName} website.`}
+>
+  <section class="relative isolate flex min-h-[80svh] items-center overflow-hidden bg-navy-950">
+    <div
+      class="absolute inset-0 -z-10 opacity-[0.18]"
+      style="background-image: radial-gradient(circle at 15% 20%, #dfb163 0, transparent 45%), radial-gradient(circle at 85% 85%, #001870 0, transparent 45%);"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div class="shell py-28">
+      <p class="eyebrow text-gold-400">404</p>
+      <h1
+        class="mt-7 max-w-3xl font-display text-display-xl font-light leading-[0.95] text-white"
+      >
+        That page isn't here
+      </h1>
+      <p class="mt-8 max-w-xl text-lg leading-relaxed text-white/70">
+        The link may be old, or the address mistyped. Nothing is lost — here is
+        the way back.
+      </p>
+
+      <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:max-w-3xl">
+        {
+          routes.map(([label, href, note]) => (
+            <a
+              href={href}
+              class="group rounded-2xl border border-white/10 bg-navy-900/60 p-6 transition hover:border-gold-500/50 hover:bg-navy-900"
+            >
+              <span class="flex items-center justify-between gap-4">
+                <span class="font-display text-xl font-light text-white">
+                  {label}
+                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="h-4 w-4 shrink-0 text-gold-400 transition-transform duration-300 group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </span>
+              <span class="mt-2 block text-sm text-white/50">{note}</span>
+            </a>
+          ))
+        }
+      </div>
+
+      {
+        sunday && (
+          <p class="mt-14 text-sm text-white/40">
+            In the meantime — {sunday.name}, {sunday.when.toLowerCase()} at{" "}
+            {sunday.time}.
+          </p>
+        )
+      }
+    </div>
+  </section>
+</Base>

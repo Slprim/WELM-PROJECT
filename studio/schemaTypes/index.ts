@@ -9,6 +9,7 @@ import testimony from "./testimony";
 import historyEvent from "./historyEvent";
 import faithArticle from "./faithArticle";
 import faq from "./faq";
+import galleryImage from "./galleryImage";
 
 export const schemaTypes = [
   // Singletons
@@ -24,4 +25,5 @@ export const schemaTypes = [
   historyEvent,
   faithArticle,
   faq,
+  galleryImage,
 ];
