@@ -3,7 +3,7 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import { site } from "../../data/site";
 import { mission } from "../../data/about";
-import { getHistory, getTestimonies } from "../../lib/content";
+import { getHistory, getTestimonies, getPage } from "../../lib/content";
 
 const history = await getHistory();
 const testimonies = await getTestimonies();
@@ -30,16 +30,23 @@ const sections = [
     body: "Why the house exists and where it is going.",
   },
 ];
+
+const page = await getPage("about", {
+  eyebrow: "About the house",
+  title: "It began with fifty people in a café",
+  lede: "Words of Eternal Life Ministries has been gathering in Accra since 2012. This is how it started, and what it has become.",
+  seoDescription: `${site.legalName} was inaugurated in Accra in August 2012. Read how the house began, what it believes, and who leads it.`,
+});
 ---
 
 <Base
   title="About"
-  description={`${site.legalName} was inaugurated in Accra in August 2012. Read how the house began, what it believes, and who leads it.`}
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="About the house"
-    title="It began with fifty people in a café"
-    lede="Words of Eternal Life Ministries has been gathering in Accra since 2012. This is how it started, and what it has become."
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   {/* ================= HISTORY ================= */}

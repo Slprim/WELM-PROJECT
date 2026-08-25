@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import { site } from "../data/site";
+import { getPage } from "../lib/content";
 
 /**
  * Giving page, built Paystack-ready.
@@ -28,16 +29,23 @@ const funds = [
 const amounts = [50, 100, 200, 500, 1000];
 
 const PAYSTACK_READY = false;
+
+const page = await getPage("give", {
+  eyebrow: "Metadidomi",
+  title: "Every seed sown here goes somewhere",
+  lede: "Your giving funds the teaching, the outreach and the running of the house. Give once, or set up a standing gift.",
+  seoDescription: `Give to ${site.legalName} by mobile money or card. Tithes, offerings, Metadidomi, missions and the building fund.`,
+});
 ---
 
 <Base
   title="Give"
-  description={`Give to ${site.legalName} by mobile money or card. Tithes, offerings, Metadidomi, missions and the building fund.`}
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="Metadidomi"
-    title="Every seed sown here goes somewhere"
-    lede="Your giving funds the teaching, the outreach and the running of the house. Give once, or set up a standing gift."
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   <section class="section bg-sand-50">

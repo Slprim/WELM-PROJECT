@@ -2,18 +2,26 @@
 import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import { mission } from "../../data/about";
-import { getThemes } from "../../lib/content";
+import { getThemes, getPage } from "../../lib/content";
 
 const themes = await getThemes();
+
+const page = await getPage("mission-and-vision", {
+  eyebrow: "Mission & Vision",
+  title: "Why this house exists",
+  seoDescription:
+    "Why Words of Eternal Life Ministries exists, where it is going, and the yearly themes the house has walked through.",
+});
 ---
 
 <Base
   title="Mission & Vision"
-  description="Why Words of Eternal Life Ministries exists, where it is going, and the yearly themes the house has walked through."
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="Mission & Vision"
-    title="Why this house exists"
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   <section class="section bg-sand-50">

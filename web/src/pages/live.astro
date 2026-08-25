@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import { site, services } from "../data/site";
+import { getPage } from "../lib/content";
 
 /**
  * The legacy LiveStream page embedded two `youtube.com/embed/live_stream?
@@ -15,16 +16,23 @@ import { site, services } from "../data/site";
  */
 const channel = site.youtubeChannels.primary;
 const online = services.filter((s) => s.where === "Clubhouse");
+
+const page = await getPage("live", {
+  eyebrow: "Live",
+  title: "Join us from wherever you are",
+  lede: "Sunday services stream on YouTube. The daily gatherings run on Clubhouse.",
+  seoDescription: `Join ${site.legalName} live from anywhere — Sunday services, the 5am Declaration Hour and daily teachings.`,
+});
 ---
 
 <Base
   title="Live"
-  description={`Join ${site.legalName} live from anywhere — Sunday services, the 5am Declaration Hour and daily teachings.`}
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="Live"
-    title="Join us from wherever you are"
-    lede="Sunday services stream on YouTube. The daily gatherings run on Clubhouse."
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   <section class="section bg-sand-50">

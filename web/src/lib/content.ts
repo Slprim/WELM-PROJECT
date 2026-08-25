@@ -256,11 +256,28 @@ export async function getCommitteeWithPhotos(): Promise<CommitteeMember[]> {
   return useOr(remote, localCommittee as CommitteeMember[]);
 }
 
-export async function getFaqs() {
-  const remote = await query<{ q: string; a: string }[]>(
-    `*[_type == "faq" && published == true] | order(order asc) { "q": question, "a": answer }`,
+export type FaqSets = {
+  published: { q: string; a: string }[];
+  /** Questions deliberately held back until the ministry supplies an answer. */
+  unanswered: string[];
+};
+
+/**
+ * FAQs, split by whether they are ready to publish.
+ *
+ * Returns null when the CMS has nothing, so faq.astro keeps its own list —
+ * that page composes answers from facts held elsewhere on the site rather
+ * than storing them twice.
+ */
+export async function getFaqs(): Promise<FaqSets | null> {
+  const remote = await query<{ q: string; a: string; published: boolean }[]>(
+    `*[_type == "faq"] | order(order asc) {
+       "q": question, "a": answer, "published": coalesce(published, true)
+     }`,
   );
-  // No local fallback here: faq.astro composes its own answers from other
-  // facts, so it passes its list in and only overrides when the CMS has one.
-  return remote && remote.length > 0 ? remote : null;
+  if (!remote || remote.length === 0) return null;
+  return {
+    published: remote.filter((f) => f.published).map(({ q, a }) => ({ q, a })),
+    unanswered: remote.filter((f) => !f.published).map((f) => f.q),
+  };
 }

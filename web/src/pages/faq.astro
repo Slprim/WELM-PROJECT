@@ -3,20 +3,22 @@ import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import { site, services } from "../data/site";
 import { mission } from "../data/about";
+import { getPage, getFaqs } from "../lib/content";
 
 /**
  * The legacy FAQ page was a maintenance notice, so there was nothing to
- * carry over. Every answer below is built only from facts already
- * established elsewhere on this site — service times, location, what the
- * house believes, how giving works.
+ * carry over. Every answer is built only from facts already established
+ * elsewhere on this site — service times, location, what the house
+ * believes, how giving works.
  *
- * Questions that would require inventing ministry policy (dress code,
- * children's provision, membership process, baptism scheduling) are listed
- * under `needsClient` instead of being answered with a guess.
+ * Questions come from Sanity when any are published, otherwise from the
+ * list below. Questions that would require inventing ministry policy are
+ * unpublished in the CMS rather than answered with a guess, and the page
+ * names them instead.
  */
 const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
 
-const faqs = [
+const fallbackFaqs = [
   {
     q: "When and where do you meet?",
     a: `${sunday.name} runs ${sunday.time} every Sunday at the ${site.address.street}, ${site.address.city}. There are also gatherings every weekday — the Declaration Hour at 5:00 am, Lunch Hour at noon and I AM GOD at 5:00 pm, all on Clubhouse.`,
@@ -52,23 +54,36 @@ const faqs = [
 ];
 
 /** Deliberately unanswered — these need the ministry's own policy. */
-const needsClient = [
+const fallbackNeedsClient = [
   "Is there provision for children during the service?",
   "How do I become a member?",
   "How do I get baptised?",
   "Is there parking at the venue?",
   "How do I join a department or serve?",
 ];
+
+const cms = await getFaqs();
+const faqs = cms?.published?.length ? cms.published : fallbackFaqs;
+const needsClient = cms?.unanswered?.length
+  ? cms.unanswered
+  : fallbackNeedsClient;
+
+const page = await getPage("faq", {
+  eyebrow: "FAQs",
+  title: "Questions people ask",
+  lede: "If your question is not here, the contact page will reach a real person.",
+  seoDescription: `Common questions about visiting ${site.legalName} — service times, location, what to expect, giving and prayer.`,
+});
 ---
 
 <Base
   title="FAQs"
-  description={`Common questions about visiting ${site.legalName} — service times, location, what to expect, giving and prayer.`}
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="FAQs"
-    title="Questions people ask"
-    lede="If your question is not here, the contact page will reach a real person."
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   <section class="section bg-sand-50">

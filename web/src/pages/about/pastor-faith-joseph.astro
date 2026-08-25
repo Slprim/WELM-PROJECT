@@ -4,6 +4,7 @@ import Base from "../../layouts/Base.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import { pastor } from "../../data/about";
 import pastorImage from "../../assets/pastor-faith-joseph.jpg";
+import { getPage } from "../../lib/content";
 
 const facts = [
   ["Full name", pastor.fullName],
@@ -12,16 +13,23 @@ const facts = [
   ["Occupation", pastor.occupation],
   ["Education", pastor.education.join(" · ")],
 ];
+
+const page = await getPage("pastor", {
+  eyebrow: "Our leader",
+  title: "Pastor Faith Joseph",
+  lede: pastor.summary,
+  seoDescription: `${pastor.knownAs} — ${pastor.summary}`,
+});
 ---
 
 <Base
   title="Pastor Faith Joseph"
-  description={`${pastor.knownAs} — ${pastor.summary}`}
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="Our leader"
-    title="Pastor Faith Joseph"
-    lede={pastor.summary}
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   <section class="section bg-sand-50">

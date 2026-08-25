@@ -3,21 +3,28 @@ import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import { site } from "../data/site";
 import SanityImage from "../components/SanityImage.astro";
-import { getPosts } from "../lib/content";
+import { getPosts, getPage } from "../lib/content";
 
 const posts = await getPosts();
 
 const [lead, ...rest] = posts;
+
+const page = await getPage("blog", {
+  eyebrow: "Blog",
+  title: "Short words, worth sitting with",
+  lede: "Reflections from the house — on grace, identity, and the life God has already given.",
+  seoDescription: `Short teachings and reflections from ${site.legalName} — on grace, identity in Christ, and eternal life.`,
+});
 ---
 
 <Base
   title="Blog"
-  description={`Short teachings and reflections from ${site.legalName} — on grace, identity in Christ, and eternal life.`}
+  description={page.seoDescription}
 >
   <PageHeader
-    eyebrow="Blog"
-    title="Short words, worth sitting with"
-    lede="Reflections from the house — on grace, identity, and the life God has already given."
+    eyebrow={page.eyebrow}
+    title={page.title}
+    lede={page.lede}
   />
 
   <section class="section bg-sand-50">
