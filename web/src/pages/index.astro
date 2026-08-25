@@ -3,15 +3,25 @@ import { Image } from "astro:assets";
 import Base from "../layouts/Base.astro";
 import HeroCarousel from "../components/HeroCarousel.astro";
 import ImageSlideshow from "../components/ImageSlideshow.astro";
+import ThemeSection from "../components/ThemeSection.astro";
+import ProgrammeCarousel from "../components/ProgrammeCarousel.astro";
 import { site } from "../data/site";
-import { getServices } from "../lib/content";
+import {
+  getServices,
+  getMonthlyThemes,
+  getThemes,
+  getProgrammes,
+} from "../lib/content";
 import { rhythmImages } from "../data/rhythm";
 import pastorImage from "../assets/pastor-faith-joseph.jpg";
 
 const services = await getServices();
+const monthlyThemes = await getMonthlyThemes();
+const yearlyThemes = await getThemes();
+const programmes = await getProgrammes();
 
 const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
-const daily = services.filter((s) => s.where === "Clubhouse");
+const daily = services.filter((s) => s.where === "Online");
 const gatherings = services.filter((s) => s.where === "In person");
 ---
 
@@ -77,6 +87,10 @@ const gatherings = services.filter((s) => s.where === "In person");
     </div>
   </section>
 
+  <ThemeSection years={yearlyThemes} months={monthlyThemes} />
+
+  <ProgrammeCarousel programmes={programmes} />
+
   {/* ==================================================================
       RHYTHMS — the full weekly schedule
       ================================================================== */}
@@ -141,7 +155,7 @@ const gatherings = services.filter((s) => s.where === "In person");
           data-reveal-delay="100"
         >
           <p class="text-xs uppercase tracking-[0.2em] text-gold-400">
-            Daily · Clubhouse
+            Daily · Online
           </p>
           <ul class="mt-7 space-y-6">
             {

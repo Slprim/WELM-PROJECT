@@ -1,0 +1,324 @@
+---
+import SanityImage from "./SanityImage.astro";
+import type { Programme } from "../lib/content";
+
+/**
+ * "Upcoming programmes" — a carousel where the artwork and the words move
+ * together, the way the hero does.
+ *
+ * Same accessibility contract as the hero carousel: a visible pause control,
+ * stops on hover and on keyboard focus, arrow-key navigation, and it never
+ * auto-advances under `prefers-reduced-motion` (WCAG 2.2.2). Slides stack in
+ * one grid cell so the section is always as tall as its tallest programme and
+ * nothing jumps as it cycles.
+ */
+interface Props {
+  programmes: Programme[];
+}
+
+const { programmes } = Astro.props;
+const many = programmes.length > 1;
+---
+
+{
+  programmes.length > 0 && (
+    <section
+      class="section bg-navy-950 text-white"
+      id="programmes"
+      aria-roledescription={many ? "carousel" : undefined}
+      aria-label="Upcoming programmes"
+      data-programmes
+    >
+      <div class="shell">
+        <div class="flex flex-wrap items-end justify-between gap-8">
+          <div class="max-w-2xl">
+            <p class="eyebrow text-gold-400" data-reveal>
+              Upcoming programmes
+            </p>
+            <h2
+              class="mt-7 font-display text-display-lg font-light leading-[1.05] text-white"
+              data-reveal
+            >
+              What's coming up in the house
+            </h2>
+          </div>
+
+          {many && (
+            <div class="flex items-center gap-4">
+              <div
+                class="mr-1 flex items-center gap-2"
+                role="tablist"
+                aria-label="Choose programme"
+              >
+                {programmes.map((_, i) => (
+                  <button
+                    type="button"
+                    class="prog-dot h-1.5 rounded-full bg-white/25 transition-all duration-300 hover:bg-white/50"
+                    data-dot={i}
+                    role="tab"
+                    aria-label={`Go to programme ${i + 1}`}
+                    aria-selected={i === 0 ? "true" : "false"}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+                data-prog-prev
+                aria-label="Previous programme"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                  <path d="M15 5l-7 7 7 7" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+                data-prog-playpause
+                aria-label="Pause programme slideshow"
+              >
+                <svg data-icon="pause" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                  <path d="M8 5h3v14H8zM13 5h3v14h-3z" />
+                </svg>
+                <svg data-icon="play" viewBox="0 0 24 24" fill="currentColor" class="hidden h-4 w-4" aria-hidden="true">
+                  <path d="M7 4l12 8-12 8z" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                class="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:border-gold-500 hover:text-gold-400"
+                data-prog-next
+                aria-label="Next programme"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* All slides share one grid cell, so the block is as tall as the
+            tallest programme and the controls never shift as it cycles. */}
+        <div class="mt-14 grid" data-reveal>
+          {programmes.map((p, i) => (
+            <article
+              class="prog-slide col-start-1 row-start-1 grid items-center gap-10 transition-all duration-700 lg:grid-cols-12 lg:gap-14"
+              data-slide={i}
+              role="group"
+              aria-roledescription={many ? "slide" : undefined}
+              aria-label={`${i + 1} of ${programmes.length}: ${p.title}`}
+              aria-hidden={i !== 0 ? "true" : undefined}
+            >
+              <div class="overflow-hidden rounded-3xl border border-white/10 bg-navy-900 lg:col-span-5">
+                <SanityImage
+                  image={p.image}
+                  alt={p.image?.alt ?? p.title}
+                  class="w-full"
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  loading={i === 0 ? "eager" : "lazy"}
+                />
+              </div>
+
+              <div class="lg:col-span-7">
+                {p.dateLabel && (
+                  <p class="text-xs uppercase tracking-[0.2em] text-gold-400">
+                    {p.dateLabel}
+                  </p>
+                )}
+
+                <h3 class="mt-5 font-display text-4xl font-light leading-tight text-white lg:text-5xl">
+                  {p.title}
+                </h3>
+
+                {p.tagline && (
+                  <p class="mt-4 font-display text-xl font-light italic text-gold-300">
+                    {p.tagline}
+                  </p>
+                )}
+
+                {p.description && (
+                  <p class="mt-6 max-w-xl leading-relaxed text-white/70">
+                    {p.description}
+                  </p>
+                )}
+
+                <dl class="mt-8 flex flex-wrap gap-x-12 gap-y-4 text-sm">
+                  {p.time && (
+                    <div>
+                      <dt class="text-white/40">Time</dt>
+                      <dd class="mt-1 text-white">{p.time}</dd>
+                    </div>
+                  )}
+                  {p.venue && (
+                    <div>
+                      <dt class="text-white/40">Venue</dt>
+                      <dd class="mt-1 text-white">{p.venue}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                {p.link && (
+                  <a
+                    href={p.link}
+                    class="btn-gold mt-9"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {p.linkLabel ?? "Find out more"}
+                  </a>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .prog-slide {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(14px);
+  }
+
+  /* Slide one stands alone before the script runs, so the section is never
+     blank with JavaScript off. */
+  .prog-slide[data-slide="0"],
+  .prog-slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  /* Once the script takes over, only .is-active decides — otherwise slide one
+     stays lit underneath every later slide. */
+  [data-programmes].is-running .prog-slide {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(14px);
+  }
+  [data-programmes].is-running .prog-slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .prog-dot {
+    width: 1.5rem;
+  }
+  .prog-dot[aria-selected="true"] {
+    width: 3rem;
+    background-color: var(--color-gold-500);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .prog-slide {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const section = document.querySelector<HTMLElement>("[data-programmes]");
+
+  if (section) {
+    const slides = Array.from(
+      section.querySelectorAll<HTMLElement>(".prog-slide"),
+    );
+
+    if (slides.length > 1) {
+      const dots = Array.from(section.querySelectorAll<HTMLElement>(".prog-dot"));
+      const prevBtn = section.querySelector<HTMLElement>("[data-prog-prev]");
+      const nextBtn = section.querySelector<HTMLElement>("[data-prog-next]");
+      const playBtn = section.querySelector<HTMLElement>("[data-prog-playpause]");
+
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const DURATION = 7000;
+
+      let index = 0;
+      let timer: number | undefined;
+      let paused = reduced.matches;
+
+      // Hand visibility over to .is-active now that the script is live.
+      section.classList.add("is-running");
+
+      const show = (next: number) => {
+        index = (next + slides.length) % slides.length;
+        slides.forEach((el, i) => {
+          el.classList.toggle("is-active", i === index);
+          el.setAttribute("aria-hidden", String(i !== index));
+        });
+        dots.forEach((el, i) =>
+          el.setAttribute("aria-selected", String(i === index)),
+        );
+      };
+
+      const stop = () => {
+        if (timer) window.clearTimeout(timer);
+        timer = undefined;
+      };
+
+      const schedule = () => {
+        stop();
+        if (paused) return;
+        timer = window.setTimeout(() => {
+          show(index + 1);
+          schedule();
+        }, DURATION);
+      };
+
+      const setPaused = (value: boolean) => {
+        paused = value;
+        playBtn?.setAttribute(
+          "aria-label",
+          value ? "Play programme slideshow" : "Pause programme slideshow",
+        );
+        playBtn?.querySelector('[data-icon="pause"]')?.classList.toggle("hidden", value);
+        playBtn?.querySelector('[data-icon="play"]')?.classList.toggle("hidden", !value);
+        if (value) stop();
+        else schedule();
+      };
+
+      const goto = (next: number) => {
+        show(next);
+        if (!paused) schedule();
+      };
+
+      prevBtn?.addEventListener("click", () => goto(index - 1));
+      nextBtn?.addEventListener("click", () => goto(index + 1));
+      playBtn?.addEventListener("click", () => setPaused(!paused));
+      dots.forEach((dot, i) => dot.addEventListener("click", () => goto(i)));
+
+      section.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          goto(index - 1);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          goto(index + 1);
+        }
+      });
+
+      // WCAG 2.2.2 — pause on hover and on keyboard focus.
+      section.addEventListener("mouseenter", stop);
+      section.addEventListener("mouseleave", () => !paused && schedule());
+      section.addEventListener("focusin", stop);
+      section.addEventListener("focusout", () => !paused && schedule());
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stop();
+        else if (!paused) schedule();
+      });
+
+      show(0);
+      if (reduced.matches) setPaused(true);
+      else schedule();
+    }
+  }
+</script>

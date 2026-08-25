@@ -10,6 +10,8 @@ import historyEvent from "./historyEvent";
 import faithArticle from "./faithArticle";
 import faq from "./faq";
 import galleryImage from "./galleryImage";
+import monthlyTheme from "./monthlyTheme";
+import programme from "./programme";
 
 export const schemaTypes = [
   // Singletons
@@ -26,4 +28,6 @@ export const schemaTypes = [
   faithArticle,
   faq,
   galleryImage,
+  monthlyTheme,
+  programme,
 ];

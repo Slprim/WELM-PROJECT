@@ -1,0 +1,164 @@
+---
+import SanityImage from "./SanityImage.astro";
+import type { MonthlyTheme, Theme } from "../lib/content";
+
+/**
+ * "The word over the house" — the yearly theme and the current month's theme,
+ * side by side.
+ *
+ * The site is static and hosted with no build server, so a new month cannot
+ * reveal itself unless somebody rebuilds. To avoid that, every month is
+ * rendered into the page and hidden, and a small script reveals whichever one
+ * matches today's date in the visitor's own time. Several months can be
+ * prepared in advance and each appears on time with nobody touching the
+ * server. The same applies to the year.
+ *
+ * The build still picks correctly server-side, so the page is right with
+ * JavaScript off — the script only corrects it once the calendar has moved
+ * past the last build.
+ */
+interface Props {
+  years: Theme[];
+  months: MonthlyTheme[];
+}
+
+const { years, months } = Astro.props;
+
+const monthKey = (iso: string) => iso.slice(0, 7);
+
+const now = new Date();
+const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+const currentYear = now.getFullYear();
+
+const sortedMonths = [...months].sort((a, b) => b.month.localeCompare(a.month));
+const sortedYears = [...years].sort((a, b) => b.year - a.year);
+
+const activeMonth =
+  sortedMonths.find((t) => monthKey(t.month) <= currentMonth) ?? sortedMonths[0];
+const activeYear = sortedYears.find((t) => t.year <= currentYear) ?? sortedYears[0];
+
+const label = (iso: string) =>
+  new Date(`${monthKey(iso)}-01T00:00:00Z`).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+const hasAny = sortedYears.length > 0 || sortedMonths.length > 0;
+---
+
+{
+  hasAny && (
+    <section class="section bg-sand-100" data-theme-section>
+      <div class="shell">
+        <p class="eyebrow text-gold-800" data-reveal>
+          The word over the house
+        </p>
+
+        <div class="mt-12 grid gap-6 lg:grid-cols-2">
+          {/* ---------------------------- YEAR ---------------------------- */}
+          {sortedYears.length > 0 && (
+            <div class="relative" data-reveal="left">
+              {sortedYears.map((theme) => (
+                <article
+                  class="theme-year flex h-full flex-col rounded-3xl bg-navy-950 p-9 text-white lg:p-11"
+                  data-year={theme.year}
+                  hidden={theme.year !== activeYear.year}
+                >
+                  <p class="text-xs uppercase tracking-[0.22em] text-gold-400">
+                    Our year of
+                  </p>
+                  <p class="mt-6 font-display text-6xl font-light leading-none text-gold-500">
+                    {theme.year}
+                  </p>
+                  <h2 class="mt-6 font-display text-3xl font-light leading-snug text-white lg:text-4xl">
+                    {theme.title}
+                  </h2>
+                  {theme.subtitle && (
+                    <p class="mt-3 text-white/60">{theme.subtitle}</p>
+                  )}
+                  {theme.scripture && (
+                    <p class="mt-auto pt-8 font-display text-lg italic text-gold-300">
+                      {theme.scripture}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+
+          {/* ---------------------------- MONTH --------------------------- */}
+          {sortedMonths.length > 0 && (
+            <div class="relative" data-reveal="right" data-reveal-delay="100">
+              {sortedMonths.map((theme) => (
+                <article
+                  class="theme-month flex h-full flex-col overflow-hidden rounded-3xl border border-sand-200 bg-white"
+                  data-month={monthKey(theme.month)}
+                  hidden={theme.month !== activeMonth.month}
+                >
+                  {theme.artwork?.url && (
+                    <div class="aspect-[16/10] overflow-hidden bg-sand-100">
+                      <SanityImage
+                        image={theme.artwork}
+                        alt={theme.artwork.alt ?? `${theme.title} theme artwork`}
+                        class="h-full w-full object-cover"
+                        sizes="(min-width: 1024px) 46vw, 100vw"
+                      />
+                    </div>
+                  )}
+
+                  <div class="flex flex-1 flex-col p-9 lg:p-11">
+                    <p class="text-xs uppercase tracking-[0.22em] text-gold-800">
+                      Our month of · {label(theme.month)}
+                    </p>
+                    <h2 class="mt-5 font-display text-3xl font-light leading-snug text-navy-900 lg:text-4xl">
+                      {theme.title}
+                    </h2>
+                    {theme.scripture && (
+                      <p class="mt-3 font-display text-lg italic text-gold-800">
+                        {theme.scripture}
+                      </p>
+                    )}
+                    {theme.note && (
+                      <p class="mt-5 leading-relaxed text-sand-600">
+                        {theme.note}
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  // Reveal the entries for the year and month the visitor is actually in, so
+  // a prepared month starts showing on the 1st without a rebuild.
+  const section = document.querySelector<HTMLElement>("[data-theme-section]");
+
+  if (section) {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const year = now.getFullYear();
+
+    const reveal = <T extends HTMLElement>(items: T[], isCurrent: (el: T) => boolean) => {
+      if (items.length === 0) return;
+      // Rendered newest-first, so the first one not in the future is current.
+      const target = items.find(isCurrent) ?? items[0];
+      for (const el of items) el.hidden = el !== target;
+    };
+
+    reveal(
+      Array.from(section.querySelectorAll<HTMLElement>(".theme-year")),
+      (el) => Number(el.dataset.year ?? 0) <= year,
+    );
+    reveal(
+      Array.from(section.querySelectorAll<HTMLElement>(".theme-month")),
+      (el) => (el.dataset.month ?? "") <= monthKey,
+    );
+  }
+</script>

@@ -37,6 +37,12 @@ export const structure: StructureResolver = (S) =>
             .title("Home page")
             .items([
               pageHeader(S, "home"),
+              S.documentTypeListItem("yearlyTheme")
+                .title('Section: "Theme of the year"'),
+              S.documentTypeListItem("monthlyTheme")
+                .title('Section: "Theme of the month"'),
+              S.documentTypeListItem("programme")
+                .title('Carousel: "Upcoming programmes"'),
               S.documentTypeListItem("service")
                 .title('Cards: "The rhythm of the house"')
                 .schemaType("service"),

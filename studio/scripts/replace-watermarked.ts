@@ -10,6 +10,7 @@
  * three affected gallery documents.
  */
 import { createRequire } from "node:module";
+import { randomUUID } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
@@ -33,7 +34,7 @@ for (const [file, alt] of clean) {
   const asset = await client.assets.upload("image", readFileSync(path), { filename: basename(path) });
   images.push({
     _type: "image",
-    _key: asset._id.replace(/[^a-zA-Z0-9]/g, "").slice(-12),
+    _key: randomUUID().replace(/-/g, "").slice(0, 16),
     asset: { _type: "reference", _ref: asset._id },
     alt,
   });

@@ -115,9 +115,9 @@ for (const m of media) {
 
 // ── FAQs ───────────────────────────────────────────────────────────────
 const faqs: [string, string, boolean][] = [
-  ["When and where do you meet?", "Revelation Sunday Service runs 8:00 – 10:00 am every Sunday at the Cambridge Centre of Excellence, Dzorwulu, Accra. There are also gatherings every weekday — the Declaration Hour at 5:00 am, Lunch Hour at noon and I AM GOD at 5:00 pm, all on Clubhouse.", true],
+  ["When and where do you meet?", "Revelation Sunday Service runs 8:00 – 10:00 am every Sunday at the Cambridge Centre of Excellence, Dzorwulu, Accra. There are also gatherings every weekday — the Declaration Hour at 5:00 am, Lunch Hour at noon and I AM GOD at 5:00 pm.", true],
   ["I have never been to a service before. What happens?", "Sunday is a teaching service — worship, then the word, and prayer. You are welcome to come exactly as you are, sit wherever you like, and leave whenever you need to. Nobody will single you out.", true],
-  ["Can I join online instead?", "Yes. Sunday services stream on the ministry's YouTube channel, and the daily gatherings run on Clubhouse. The Live page has everything in one place.", true],
+  ["Can I join online instead?", "Yes. Sunday services stream on the ministry's YouTube channel. The Live page has everything in one place.", true],
   ["What does this church believe?", "The house holds to ten articles of faith, each anchored in scripture — from the authority of the Bible through to healing, baptism and prosperity. The full statement is published on this site.", true],
   ["How do I give?", "Giving will be available by mobile money — MTN MoMo, Telecel Cash and AT Money — as well as by card and bank transfer, through Paystack. You can also give in person at any gathering.", true],
   ["Can I request prayer?", "Yes. Send a prayer request through the contact page and it goes to the pastoral team. Requests are treated as private.", true],

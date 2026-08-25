@@ -26,7 +26,6 @@ export default defineType({
       options: {
         list: [
           { title: "In person", value: "In person" },
-          { title: "Clubhouse", value: "Clubhouse" },
           { title: "Online", value: "Online" },
         ],
         layout: "radio",

@@ -320,3 +320,74 @@ export async function getGallery(): Promise<GalleryPhoto[]> {
   );
   return remote ?? [];
 }
+
+export type MonthlyTheme = {
+  /** ISO date; only the year and month are used. */
+  month: string;
+  title: string;
+  scripture?: string | null;
+  note?: string | null;
+  artwork?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+/**
+ * Themes of the month, newest first.
+ *
+ * All of them are returned, not just the current one — the home page renders
+ * the lot and reveals the right one by date in the browser, so a month
+ * prepared in advance appears on time without a rebuild.
+ */
+export async function getMonthlyThemes(): Promise<MonthlyTheme[]> {
+  const remote = await query<MonthlyTheme[]>(
+    `*[_type == "monthlyTheme" && defined(month)] | order(month desc) {
+       "month": month, title, scripture, note, artwork ${IMAGE_FIELDS}
+     }`,
+  );
+  return remote ?? [];
+}
+
+export type Programme = {
+  title: string;
+  tagline?: string | null;
+  description?: string | null;
+  startDate?: string | null;
+  dateLabel?: string | null;
+  time?: string | null;
+  venue?: string | null;
+  link?: string | null;
+  linkLabel?: string | null;
+  image: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
+};
+
+/**
+ * Upcoming programmes for the home page carousel.
+ *
+ * Dated programmes that have already passed are dropped, so the section keeps
+ * itself tidy without anyone remembering to unpublish. Undated ones (standing
+ * or recurring programmes) always show. Order is soonest first, with undated
+ * entries falling back to their sort order.
+ */
+export async function getProgrammes(): Promise<Programme[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const remote = await query<Programme[]>(
+    `*[_type == "programme"
+        && coalesce(published, true) == true
+        && (!defined(startDate) || startDate >= $today)]
+       | order(coalesce(startDate, "9999-12-31") asc, order asc) {
+       title, tagline, description, startDate, dateLabel, time, venue,
+       link, linkLabel, image ${IMAGE_FIELDS}
+     }`,
+    { today },
+  );
+  return remote ?? [];
+}
