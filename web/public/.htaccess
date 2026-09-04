@@ -11,8 +11,12 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Force HTTPS. cPanel terminates TLS upstream on some plans, so check the
-  # forwarded header too or this loops forever.
+  # Force HTTPS.
+  #
+  # The X-Forwarded-Proto check is not optional here: Cloudflare terminates
+  # TLS at its edge and may talk plain HTTP to this origin, so %{HTTPS} is
+  # "off" on a request the visitor made over HTTPS. Without the second
+  # condition this rule would redirect that request to HTTPS again, forever.
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

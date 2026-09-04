@@ -9,6 +9,28 @@
  * Exits non-zero if anything fails, so it can gate a deploy.
  */
 const base = (process.argv[2] ?? "http://localhost:4321").replace(/\/+$/, "");
+
+// Optional DNS override: RESOLVE_TO=104.21.31.149 forces every request for
+// this host to a specific IP while keeping the hostname for SNI and Host.
+// Needed when a local resolver still has a stale record and would otherwise
+// test the origin instead of the CDN a real visitor reaches.
+if (process.env.RESOLVE_TO) {
+  const { Agent, setGlobalDispatcher } = await import("undici");
+  const ip = process.env.RESOLVE_TO;
+  setGlobalDispatcher(new Agent({
+    connect: {
+      lookup: (_hostname, opts, cb) => {
+        const family = ip.includes(":") ? 6 : 4;
+        // undici sets opts.all, which expects the array form; plain dns.lookup
+        // expects (err, address, family). Handle both.
+        return opts && opts.all
+          ? cb(null, [{ address: ip, family }])
+          : cb(null, ip, family);
+      },
+    },
+  }));
+  console.log(`  (resolving to ${ip})`);
+}
 const isLive = !base.includes("localhost") && !base.includes("127.0.0.1");
 
 const results = [];
