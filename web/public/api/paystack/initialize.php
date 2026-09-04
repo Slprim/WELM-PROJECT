@@ -118,6 +118,34 @@ if ($callback) {
     $payload['callback_url'] = $callback;
 }
 
+// ---------------------------------------------------------------------------
+// Split settlement.
+//
+// When a subaccount is configured, Paystack settles the gift according to the
+// split set on that subaccount in the dashboard — this endpoint does not
+// decide the percentage, it only names the destination.
+//
+// Subaccount codes are mode-specific: one created in live mode is invalid
+// against test keys and vice versa, so the code lives beside the secret key
+// in paystack-config.php rather than in this file.
+// ---------------------------------------------------------------------------
+if (!empty($config['subaccount'])) {
+    $payload['subaccount'] = $config['subaccount'];
+
+    // Who pays Paystack's fee. 'subaccount' means it comes out of the
+    // church's share; 'account' leaves it on the main account. Paystack
+    // defaults to the main account when this is not sent.
+    if (!empty($config['bearer'])) {
+        $payload['bearer'] = $config['bearer'];
+    }
+
+    // Optional flat amount, in pesewas, kept by the main account before the
+    // split. Only meaningful alongside a subaccount.
+    if (isset($config['transaction_charge']) && $config['transaction_charge'] > 0) {
+        $payload['transaction_charge'] = (int) $config['transaction_charge'];
+    }
+}
+
 $ch = curl_init('https://api.paystack.co/transaction/initialize');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,

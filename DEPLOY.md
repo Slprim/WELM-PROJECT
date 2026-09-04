@@ -77,7 +77,27 @@ Fill it in with your **test** keys first:
 'secret_key'   => 'sk_test_…',
 'callback_url' => 'https://kingdomofgods.org/give/thank-you/',
 'notify_email' => 'wordsofeternalifemin@gmail.com',
+'subaccount'   => 'ACCT_xelginy2o9fh37w',
 ```
+
+### About the subaccount
+
+Gifts settle to the subaccount according to the split configured on it in the
+Paystack dashboard. The site only names the destination — it does not set the
+percentage.
+
+**Subaccount codes are mode-specific.** `ACCT_xelginy2o9fh37w` was created in
+one mode; a live-mode code is rejected by test keys and vice versa. If test
+payments fail with an invalid-subaccount error, create the equivalent
+subaccount in test mode and use that code while testing.
+
+Two optional settings sit beside it:
+
+- `'bearer'` — who pays Paystack's fee. `'subaccount'` takes it from the
+  church's share, `'account'` leaves it on the main account. Left unset,
+  Paystack charges the main account.
+- `'transaction_charge'` — a flat amount in **pesewas** the main account keeps
+  before the split. 100 = GHS 1.00. Leave unset for none.
 
 Nothing above the web root can be requested over HTTP, so even if PHP stops
 executing — a misconfiguration that has exposed plenty of other sites — the

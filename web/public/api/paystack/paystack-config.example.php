@@ -16,6 +16,25 @@ return [
 
     'currency' => 'GHS',
 
+    // Split settlement (optional). Leave empty for a single account.
+    //
+    // IMPORTANT: subaccount codes are mode-specific. The code below was
+    // created in one mode — a live-mode code will be rejected by test keys,
+    // and vice versa. Keep the code and the secret key in the same mode.
+    //
+    // The split percentage itself is set on the subaccount in the Paystack
+    // dashboard, not here.
+    'subaccount' => 'ACCT_xelginy2o9fh37w',
+
+    // Who pays Paystack's transaction fee: 'subaccount' or 'account'.
+    // Leave null to use the Paystack default (the main account).
+    'bearer' => null,
+
+    // Optional flat amount in PESEWAS kept by the main account before the
+    // split. 0 or null to disable. (100 pesewas = GHS 1.00)
+    'transaction_charge' => null,
+
+
     // Where Paystack sends the giver after checkout.
     'callback_url' => 'https://kingdomofgods.org/give/thank-you/',
 
