@@ -109,17 +109,62 @@ In cPanel → **MultiPHP Manager**, set the domain to **PHP 7.4 or newer**. The
 files target 7.4 deliberately, so anything from 7.4 to 8.3 works. Make sure
 `curl` is enabled (it is by default).
 
-## 6. Point Paystack's webhook at the site
+## 6. Point Paystack's webhook at the router
 
-Paystack Dashboard → Settings → API Keys & Webhooks → **Webhook URL**:
+**Read this section before touching anything in the Paystack dashboard.**
+
+Paystack allows **one webhook URL per account, per mode**. This account also
+serves the bookshop. If you simply replace the webhook URL with the church's
+endpoint, Paystack stops calling the bookshop's URL — with no error. Its
+orders would just quietly stop being marked paid.
+
+So the church endpoint is not registered directly. A router is, and it
+forwards every event to both.
+
+Do it in this order:
+
+**a. Copy the URL that is already there.** Paystack Dashboard → Settings →
+API Keys & Webhooks. Whatever is in the live Webhook URL field right now is
+the bookshop's endpoint. Copy it before you overwrite it — this is the one
+thing that is hard to recover if lost.
+
+**b. Put both destinations in `paystack-config.php`:**
+
+```php
+'router_targets' => [
+    'church'   => 'https://kingdomofgods.org/api/paystack/webhook.php',
+    'bookshop' => 'https://…',   // the URL you just copied
+],
+```
+
+**c. Only then change the Webhook URL in Paystack to:**
 
 ```
-https://kingdomofgods.org/api/paystack/webhook.php
+https://kingdomofgods.org/api/paystack/webhook-router.php
 ```
 
-The webhook is the only trustworthy confirmation that money moved — the
-browser redirect can be faked, or never happen if someone closes the tab. It
-verifies every request against your secret key before believing it.
+**d. Test the bookshop first, not the church.** Place a real bookshop order
+(or resend a past event from Paystack Dashboard → Webhooks) and confirm it is
+still fulfilled. The bookshop is the system with something to lose; the church
+endpoint is new and has nothing to break.
+
+Then test giving.
+
+### If a delivery fails
+
+The router answers Paystack 200 and forwards afterwards, so Paystack never
+retries — a retry would deliver the event twice to whichever destination
+already succeeded, which for the bookshop could mean a duplicated order.
+
+Failures are instead written to `paystack-router.log` beside
+`paystack-config.php`, and emailed to `notify_email` if it is set. The payment
+itself is never affected; only the notification is lost, and the order or gift
+can be marked manually.
+
+### Why not just verify on the callback?
+
+Because the browser redirect can be closed, blocked or never happen. The
+webhook is the only delivery Paystack guarantees.
 
 ## 7. Enable HTTPS
 

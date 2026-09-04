@@ -42,6 +42,26 @@ return [
     'notify_email' => '',
     'mail_from' => 'no-reply@kingdomofgods.org',
 
+    // ------------------------------------------------------------------
+    // Webhook fan-out.
+    //
+    // Paystack allows ONE webhook URL per account per mode, and this account
+    // also serves the bookshop. Register webhook-router.php with Paystack and
+    // list every destination here; the router forwards each event to all of
+    // them, signature intact.
+    //
+    // BEFORE changing anything in Paystack, copy the URL currently configured
+    // there into `bookshop` below — that is the bookshop's live endpoint, and
+    // it is the thing that breaks if it is lost.
+    // ------------------------------------------------------------------
+    'router_targets' => [
+        'church'   => 'https://kingdomofgods.org/api/paystack/webhook.php',
+        'bookshop' => '',  // <- paste the CURRENT Paystack webhook URL here first
+    ],
+
+    // Records any delivery that failed. Keep it above the web root.
+    'router_log' => __DIR__ . '/paystack-router.log',
+
     // Written by webhook.php. Keep it above the web root.
     'log_file' => __DIR__ . '/paystack-giving.log',
 ];
