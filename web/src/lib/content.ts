@@ -161,11 +161,25 @@ export type Theme = {
   title: string;
   subtitle?: string;
   scripture?: string;
+  artwork?: {
+    url: string | null;
+    alt?: string | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
 };
 
 export async function getThemes(): Promise<Theme[]> {
   const remote = await query<Theme[]>(
-    `*[_type == "yearlyTheme"] | order(year desc) { year, title, subtitle, scripture }`,
+    `*[_type == "yearlyTheme"] | order(year desc) {
+       year, title, subtitle, scripture,
+       "artwork": artwork {
+         "url": asset->url,
+         "alt": alt,
+         "width": asset->metadata.dimensions.width,
+         "height": asset->metadata.dimensions.height
+       }
+     }`,
   );
   // `localThemes` is `as const`, so widen it to the mutable shape.
   return useOr(remote, localThemes.map((t) => ({ ...t })) as Theme[]);

@@ -61,27 +61,41 @@ const hasAny = sortedYears.length > 0 || sortedMonths.length > 0;
             <div class="relative" data-reveal="left">
               {sortedYears.map((theme) => (
                 <article
-                  class="theme-year flex h-full flex-col rounded-3xl bg-navy-950 p-9 text-white lg:p-11"
+                  class="theme-year flex h-full flex-col overflow-hidden rounded-3xl bg-navy-950 text-white"
                   data-year={theme.year}
                   hidden={theme.year !== activeYear.year}
                 >
-                  <p class="text-xs uppercase tracking-[0.22em] text-gold-400">
-                    Our year of
-                  </p>
-                  <p class="mt-6 font-display text-6xl font-light leading-none text-gold-500">
-                    {theme.year}
-                  </p>
-                  <h2 class="mt-6 font-display text-3xl font-light leading-snug text-white lg:text-4xl">
-                    {theme.title}
-                  </h2>
-                  {theme.subtitle && (
-                    <p class="mt-3 text-white/60">{theme.subtitle}</p>
+                  {/* Artwork sits ABOVE the text, not behind it. The theme
+                      flyers carry their own large typography, and laying our
+                      heading over it put two sets of type in the same space —
+                      unreadable. This matches the month card beside it. */}
+                  {theme.artwork?.url && (
+                    <div class="aspect-[16/10] overflow-hidden bg-navy-900">
+                      <SanityImage
+                        image={theme.artwork}
+                        alt={theme.artwork.alt ?? `${theme.year} theme artwork`}
+                        class="h-full w-full object-cover"
+                        sizes="(min-width: 1024px) 46vw, 100vw"
+                      />
+                    </div>
                   )}
-                  {theme.scripture && (
-                    <p class="mt-auto pt-8 font-display text-lg italic text-gold-300">
-                      {theme.scripture}
+
+                  <div class="flex flex-1 flex-col p-9 lg:p-11">
+                    <p class="text-xs uppercase tracking-[0.22em] text-gold-400">
+                      Our year of · {theme.year}
                     </p>
-                  )}
+                    <h2 class="mt-5 font-display text-3xl font-light leading-snug text-white lg:text-4xl">
+                      {theme.title}
+                    </h2>
+                    {theme.subtitle && (
+                      <p class="mt-3 text-white/60">{theme.subtitle}</p>
+                    )}
+                    {theme.scripture && (
+                      <p class="mt-auto pt-8 font-display text-lg italic text-gold-300">
+                        {theme.scripture}
+                      </p>
+                    )}
+                  </div>
                 </article>
               ))}
             </div>

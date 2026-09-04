@@ -10,7 +10,21 @@ export default defineType({
     defineField({ name: "title", type: "string", validation: (r) => r.required() }),
     defineField({ name: "subtitle", type: "string" }),
     defineField({ name: "scripture", type: "string" }),
-    defineField({ name: "artwork", type: "image", options: { hotspot: true } }),
+    defineField({
+      name: "artwork",
+      type: "image",
+      options: { hotspot: true },
+      description:
+        "The year's theme graphic. Sits behind the text on the home page, so busy artwork still reads well.",
+      fields: [
+        defineField({
+          name: "alt",
+          type: "string",
+          title: "Alt text",
+          description: "Describe the artwork for screen readers.",
+        }),
+      ],
+    }),
   ],
   orderings: [
     { title: "Newest first", name: "yearDesc", by: [{ field: "year", direction: "desc" }] },
