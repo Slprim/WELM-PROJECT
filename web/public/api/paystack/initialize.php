@@ -173,7 +173,12 @@ $decoded = json_decode((string) $response, true);
 
 if ($status !== 200 || empty($decoded['status']) || empty($decoded['data']['authorization_url'])) {
     error_log('paystack: initialize failed (' . $status . ') ' . (string) $response);
-    fail(502, $decoded['message'] ?? 'The payment provider rejected the request.');
+    // 400, not 502. Paystack answered - it simply refused the request, usually
+    // a bad key or a subaccount from the wrong mode. Sending 502 would be
+    // semantically wrong AND practically harmful: Cloudflare replaces the body
+    // of a 5xx from the origin with its own error page, so the giver would see
+    // a generic gateway error instead of what actually went wrong.
+    fail(400, $decoded['message'] ?? 'The payment provider rejected the request.');
 }
 
 echo json_encode([
