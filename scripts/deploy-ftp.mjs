@@ -31,7 +31,7 @@ if (!fs.existsSync(LOCAL)) {
   process.exit(1);
 }
 
-const client = new Client(30_000);
+const client = new Client(120_000);
 client.ftp.verbose = false;
 
 try {
