@@ -63,7 +63,7 @@ Copy `web/public/api/paystack/paystack-config.example.php` to
 `paystack-config.php` and place it **one level above `public_html`**:
 
 ```
-/home/youruser/
+/home/kingddbn/
 ├── paystack-config.php    ← here. NOT reachable over HTTP.
 └── public_html/
     └── api/paystack/…

@@ -8,7 +8,7 @@ repo and has not passed through chat.
 **One level ABOVE `public_html`** — the same folder `public_html` sits in:
 
 ```
-/home/<youruser>/
+/home/kingddbn/
 ├── paystack-config.php     ← here
 └── public_html/            ← the website
 ```
