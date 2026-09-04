@@ -50,13 +50,16 @@ return [
     // list every destination here; the router forwards each event to all of
     // them, signature intact.
     //
-    // BEFORE changing anything in Paystack, copy the URL currently configured
-    // there into `bookshop` below — that is the bookshop's live endpoint, and
-    // it is the thing that breaks if it is lost.
+    // The bookshop endpoint below is its live webhook. Verified reachable and
+    // signature-verifying: an unsigned POST returns 401 "Invalid signature",
+    // so it protects itself and does not rely on the router to be trusted.
+    //
+    // If the bookshop is ever redeployed at a different path, update it here
+    // BEFORE repointing anything in Paystack.
     // ------------------------------------------------------------------
     'router_targets' => [
         'church'   => 'https://kingdomofgods.org/api/paystack/webhook.php',
-        'bookshop' => '',  // <- paste the CURRENT Paystack webhook URL here first
+        'bookshop' => 'https://thefathershouseprints.kingdomofgods.org/api/payments/webhook',
     ],
 
     // Records any delivery that failed. Keep it above the web root.

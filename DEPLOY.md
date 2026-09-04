@@ -123,19 +123,28 @@ forwards every event to both.
 
 Do it in this order:
 
-**a. Copy the URL that is already there.** Paystack Dashboard → Settings →
-API Keys & Webhooks. Whatever is in the live Webhook URL field right now is
-the bookshop's endpoint. Copy it before you overwrite it — this is the one
-thing that is hard to recover if lost.
+**a. Confirm what is currently in Paystack.** Dashboard → Settings → API Keys
+& Webhooks. It should read:
 
-**b. Put both destinations in `paystack-config.php`:**
+```
+https://thefathershouseprints.kingdomofgods.org/api/payments/webhook
+```
+
+If it says anything else, that is the real bookshop endpoint — use it below
+instead, and tell whoever maintains the bookshop.
+
+**b. Both destinations are already set in the config template:**
 
 ```php
 'router_targets' => [
     'church'   => 'https://kingdomofgods.org/api/paystack/webhook.php',
-    'bookshop' => 'https://…',   // the URL you just copied
+    'bookshop' => 'https://thefathershouseprints.kingdomofgods.org/api/payments/webhook',
 ],
 ```
+
+The bookshop endpoint has been checked: it answers `401 Invalid signature` to
+an unsigned POST, so it verifies for itself and does not depend on the router
+being trustworthy.
 
 **c. Only then change the Webhook URL in Paystack to:**
 
