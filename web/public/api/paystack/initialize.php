@@ -29,6 +29,100 @@ function fail($status, $message)
     exit;
 }
 
+/**
+ * One call to the Paystack API. Returns [httpStatus, decodedBody].
+ *
+ * Kept deliberately small: the transaction call below builds its own request
+ * because it needs the raw response for logging, while plan lookup and
+ * creation only care about the decoded result.
+ */
+function paystack_request($method, $url, $secretKey, array $body = null)
+{
+    $ch = curl_init($url);
+    $opts = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => $method,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $secretKey,
+            'Content-Type: application/json',
+            'Cache-Control: no-cache',
+        ],
+        CURLOPT_TIMEOUT => 20,
+    ];
+    if ($body !== null) {
+        $opts[CURLOPT_POSTFIELDS] = json_encode($body);
+    }
+    curl_setopt_array($ch, $opts);
+
+    $raw = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($raw === false) {
+        return [0, null];
+    }
+
+    return [$status, json_decode((string) $raw, true)];
+}
+
+/**
+ * Find the monthly plan for this fund and amount, creating it if it is the
+ * first gift of that size.
+ *
+ * Paystack has no "find plan by name", so plans are listed and matched on a
+ * deterministic name. A plan is one per (fund, amount) pair, which is how
+ * Paystack models recurring charges - the amount lives on the plan, not on
+ * the transaction.
+ *
+ * Returns a plan_code, or null if Paystack could not be reached or refused.
+ */
+function paystack_monthly_plan($secretKey, $fund, $amountMinor, $currency)
+{
+    $wanted = sprintf('welm-monthly-%s-%d', $fund, $amountMinor);
+
+    // Look through existing plans first so a repeat amount reuses its plan.
+    for ($page = 1; $page <= 5; $page++) {
+        [$status, $body] = paystack_request(
+            'GET',
+            'https://api.paystack.co/plan?perPage=100&page=' . $page,
+            $secretKey
+        );
+        if ($status !== 200 || empty($body['status']) || !is_array($body['data'] ?? null)) {
+            break;
+        }
+        foreach ($body['data'] as $plan) {
+            if (($plan['name'] ?? '') === $wanted && !empty($plan['plan_code'])) {
+                return (string) $plan['plan_code'];
+            }
+        }
+        if (count($body['data']) < 100) {
+            break;
+        }
+    }
+
+    [$status, $body] = paystack_request('POST', 'https://api.paystack.co/plan', $secretKey, [
+        'name' => $wanted,
+        'amount' => $amountMinor,
+        'interval' => 'monthly',
+        'currency' => $currency,
+    ]);
+
+    if ($status === 200 || $status === 201) {
+        if (!empty($body['status']) && !empty($body['data']['plan_code'])) {
+            return (string) $body['data']['plan_code'];
+        }
+    }
+
+    error_log(sprintf(
+        'paystack: could not create monthly plan %s (HTTP %d) %s',
+        $wanted,
+        $status,
+        is_array($body) ? (string) ($body['message'] ?? '') : ''
+    ));
+
+    return null;
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     fail(405, 'Method not allowed.');
 }
@@ -116,6 +210,46 @@ $payload = [
 
 if ($callback) {
     $payload['callback_url'] = $callback;
+}
+
+// ---------------------------------------------------------------------------
+// Monthly giving.
+//
+// Paystack models recurring charges as a plan the giver is subscribed to, so
+// the amount comes from the plan and overrides whatever is sent here. Passing
+// the plan is what makes the first payment set up a subscription rather than
+// a one-off charge.
+//
+// Paystack can only charge a SUBSCRIPTION to a bank card - mobile money
+// cannot be debited automatically. Channels are therefore restricted to card
+// for a monthly gift, so a giver is told on the checkout page rather than
+// paying by MoMo and believing a monthly gift was set up when it was not.
+// The form says the same thing before they get there.
+// ---------------------------------------------------------------------------
+if ($recurring) {
+    // Paystack will not create a plan below GHS 2, and its own error reads
+    // "Amount is invalid" - which tells a giver nothing. Catch it here and say
+    // what to do instead. MIN_RECURRING_MINOR is in pesewas.
+    $minRecurringMinor = 200;
+    if ($amountMinor < $minRecurringMinor) {
+        fail(422, sprintf(
+            'A monthly gift needs to be %s %s or more. A smaller amount can still be given as a one-off gift.',
+            $currency,
+            number_format($minRecurringMinor / 100, 2)
+        ));
+    }
+
+    $planCode = paystack_monthly_plan($config['secret_key'], $fund, $amountMinor, $currency);
+
+    if ($planCode === null) {
+        // Better to say monthly failed than to silently take a single gift
+        // from someone who asked to give every month.
+        fail(400, 'Monthly giving could not be set up just now. Please try again, or give a one-off gift and contact the church office.');
+    }
+
+    $payload['plan'] = $planCode;
+    $payload['channels'] = ['card'];
+    $payload['metadata']['recurring_plan'] = $planCode;
 }
 
 // ---------------------------------------------------------------------------

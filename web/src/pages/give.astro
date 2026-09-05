@@ -242,6 +242,15 @@ const page = await getPage("give", {
                 />
                 <span class="text-sm text-sand-600">
                   Make this a monthly gift
+                  {/* Paystack can only charge a subscription to a bank card;
+                      mobile money cannot be debited automatically. Saying so
+                      here means a MoMo giver is not sent to a checkout that
+                      will not take their preferred method. */}
+                  <span class="mt-1 block text-xs text-sand-500">
+                    Monthly giving needs a debit or credit card &mdash; mobile
+                    money cannot be charged automatically &mdash; and a minimum
+                    of GHS&nbsp;2.
+                  </span>
                 </span>
               </label>
             </fieldset>
