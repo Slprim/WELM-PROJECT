@@ -14,7 +14,7 @@ export const site = {
   vision: "That men will live like God",
   description:
     "Words of Eternal Life Ministries (Kingdom of Gods) — a church in Accra, Ghana building believers into the fullness of Christ through teaching, prayer and community.",
-  email: "wordsofeternalifemin@gmail.com",
+  email: "wordsofeternallifemin@gmail.com",
   // The legacy site shipped the placeholder "+012 345 6789". These are the
   // real enquiry lines, taken from the ministry's own event artwork
   // (img/Prgrms/Pro&Power Conf.jpg and img/Themes/Year/Theme 2023.jpg).

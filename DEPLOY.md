@@ -76,7 +76,7 @@ Fill it in with your **test** keys first:
 ```php
 'secret_key'   => 'sk_test_…',
 'callback_url' => 'https://kingdomofgods.org/give/thank-you/',
-'notify_email' => 'wordsofeternalifemin@gmail.com',
+'notify_email' => 'wordsofeternallifemin@gmail.com',
 'subaccount'   => 'ACCT_xelginy2o9fh37w',
 ```
 

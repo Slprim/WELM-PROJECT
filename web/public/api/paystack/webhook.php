@@ -66,11 +66,22 @@ if ($type !== 'charge.success') {
     exit;
 }
 
+// This account also serves the bookshop, and the router forwards EVERY live
+// event here - including shop orders. Only a transaction started by this
+// site's initialize.php carries metadata.fund from its fixed allowlist, so
+// that is what separates a gift from someone else's sale. Without this check
+// a book order is written into the giving log as an "offering" and emailed to
+// the church office as a gift.
+$allowedFunds = ['tithe', 'offering', 'metadidomi', 'missions', 'building'];
+$fund = (string) ($data['metadata']['fund'] ?? '');
+if (!in_array($fund, $allowedFunds, true)) {
+    exit;
+}
+
 $reference = (string) ($data['reference'] ?? '');
 $amount = ((int) ($data['amount'] ?? 0)) / 100;
 $currency = (string) ($data['currency'] ?? 'GHS');
 $email = (string) ($data['customer']['email'] ?? '');
-$fund = (string) ($data['metadata']['fund'] ?? 'offering');
 $name = (string) ($data['metadata']['giver_name'] ?? '');
 
 // A flat log file, so there is a record even before any accounting system

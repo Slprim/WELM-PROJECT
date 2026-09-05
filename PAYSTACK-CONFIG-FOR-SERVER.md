@@ -35,7 +35,7 @@ return [
     'callback_url' => 'https://kingdomofgods.org/give/thank-you/',
 
     // Emailed when a gift arrives, and when a webhook fails to deliver.
-    'notify_email' => 'wordsofeternalifemin@gmail.com',
+    'notify_email' => 'wordsofeternallifemin@gmail.com',
     'mail_from'    => 'no-reply@kingdomofgods.org',
 
     // Split settlement. Subaccount codes are mode-specific: this one only

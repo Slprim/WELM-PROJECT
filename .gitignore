@@ -32,3 +32,10 @@ Thumbs.db
 # Paystack secret config — must never be committed. Lives above the web root.
 paystack-config.php
 paystack-giving.log
+
+# Secrets pasted for setup - never commit these
+keys.md
+**/keys.md
+.env
+web/.env
+.ftp-credentials
