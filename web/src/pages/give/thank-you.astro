@@ -5,11 +5,19 @@ import { site } from "../../data/site";
 /**
  * Where Paystack sends the giver after checkout.
  *
- * This page deliberately does NOT claim the payment succeeded. The redirect
- * fires whatever the outcome, and can be reached by typing the URL, so
- * treating it as proof of payment would be wrong. The webhook is what
- * actually confirms money moved; this page just closes the loop politely and
- * tells them the receipt is the real record.
+ * Paystack redirects here whatever the outcome - paid, cancelled or failed -
+ * so the page cannot assume a gift was made. It used to show a tick and
+ * "Thank you" regardless, which meant someone who cancelled, or whose card
+ * was declined, was thanked for a gift the church never received.
+ *
+ * It now asks api/paystack/verify.php what actually happened and words itself
+ * accordingly. The webhook remains the record of a gift; this only decides
+ * what the giver is told.
+ *
+ * The page ships in its "checking" state and is filled in by the script
+ * below, because it is statically built and the reference is only known in
+ * the browser. Without JavaScript the neutral wording stands, which is true
+ * whatever the outcome.
  */
 ---
 
@@ -28,40 +36,163 @@ import { site } from "../../data/site";
     <div class="shell py-28">
       <div class="max-w-2xl">
         <span
-          class="grid h-16 w-16 place-items-center rounded-full border-2 border-gold-500 text-gold-500"
+          id="outcome-mark"
+          class="grid h-16 w-16 place-items-center rounded-full border-2 border-white/30 text-white/50"
           aria-hidden="true"
         >
+          {/* Swapped for a tick or a cross once the outcome is known. */}
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="1.8"
-            class="h-7 w-7"><path d="M20 6L9 17l-5-5"></path></svg
+            class="h-7 w-7"
+            ><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"
+            ></path></svg
           >
         </span>
 
         <h1
+          id="outcome-title"
           class="mt-9 font-display text-display-xl font-light leading-[0.95] text-white"
         >
-          Thank you
+          Checking your gift
         </h1>
 
-        <p class="mt-8 text-lg leading-relaxed text-white/75">
-          Your giving supports the teaching, the outreach and the running of the
-          house. Paystack will email a receipt to the address you gave — that
-          receipt, not this page, is the record of your gift.
+        <p id="outcome-lead" class="mt-8 text-lg leading-relaxed text-white/75">
+          One moment while we confirm this with Paystack.
         </p>
 
-        <p class="mt-5 leading-relaxed text-white/55">
-          If anything looks wrong, or no receipt arrives, contact the church
-          office and someone will check it for you.
+        <p id="outcome-note" class="mt-5 leading-relaxed text-white/55">
+          If anything looks wrong, contact the church office and someone will
+          check it for you.
         </p>
 
         <div class="mt-11 flex flex-wrap gap-4">
-          <a href="/" class="btn-gold">Back to the home page</a>
+          <a id="outcome-cta" href="/" class="btn-gold">Back to the home page</a>
           <a href="/contact" class="btn-ghost">Contact the office</a>
         </div>
+
+        {/* Screen readers are told when the wording changes under them. */}
+        <p class="sr-only" role="status" aria-live="polite" id="outcome-live"></p>
       </div>
     </div>
   </section>
 </Base>
+
+<script>
+  // Paystack sends back ?reference= and ?trxref=, the same value twice.
+  const params = new URLSearchParams(window.location.search);
+  const reference = params.get("reference") ?? params.get("trxref");
+
+  const el = (id: string) => document.getElementById(id);
+  const mark = el("outcome-mark");
+  const title = el("outcome-title");
+  const lead = el("outcome-lead");
+  const note = el("outcome-note");
+  const cta = el("outcome-cta");
+  const live = el("outcome-live");
+
+  const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-7 w-7"><path d="M20 6L9 17l-5-5"/></svg>';
+  const CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-7 w-7"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+
+  type Outcome = {
+    markClass: string;
+    icon: string;
+    title: string;
+    lead: string;
+    note: string;
+    ctaText: string;
+    ctaHref: string;
+  };
+
+  const paid = (amount?: number, currency?: string, recurring?: boolean): Outcome => ({
+    markClass: "border-gold-500 text-gold-500",
+    icon: TICK,
+    title: "Thank you",
+    lead:
+      (amount
+        ? `Your gift of ${currency ?? "GHS"} ${amount.toFixed(2)} has been received. `
+        : "Your gift has been received. ") +
+      (recurring
+        ? "It will repeat each month, and you can stop it any time by contacting the office. "
+        : "") +
+      "Paystack will email a receipt to the address you gave — that receipt, not this page, is the record of your gift.",
+    note: "If no receipt arrives, contact the church office and someone will check it for you.",
+    ctaText: "Back to the home page",
+    ctaHref: "/",
+  });
+
+  const notCompleted: Outcome = {
+    markClass: "border-white/30 text-white/60",
+    icon: CROSS,
+    title: "Your gift wasn't completed",
+    lead:
+      "The payment was cancelled or did not go through, so nothing has been charged. " +
+      "Nothing is wrong on your side — you can try again whenever you like.",
+    note: "If you believe you were charged, contact the church office with the date and amount and someone will check it.",
+    ctaText: "Try giving again",
+    ctaHref: "/give",
+  };
+
+  // Reached by typing the URL, or with a reference Paystack cannot confirm.
+  const neutral: Outcome = {
+    markClass: "border-white/30 text-white/60",
+    icon: TICK,
+    title: "Thank you",
+    lead:
+      "Your giving supports the teaching, the outreach and the running of the house. " +
+      "If you have just given, Paystack will email a receipt to the address you gave — " +
+      "that receipt, not this page, is the record of your gift.",
+    note: "If anything looks wrong, or no receipt arrives, contact the church office and someone will check it for you.",
+    ctaText: "Back to the home page",
+    ctaHref: "/",
+  };
+
+  function render(o: Outcome) {
+    if (mark) {
+      mark.className = `grid h-16 w-16 place-items-center rounded-full border-2 ${o.markClass}`;
+      mark.innerHTML = o.icon;
+    }
+    if (title) title.textContent = o.title;
+    if (lead) lead.textContent = o.lead;
+    if (note) note.textContent = o.note;
+    if (cta) {
+      cta.textContent = o.ctaText;
+      cta.setAttribute("href", o.ctaHref);
+    }
+    if (live) live.textContent = o.title;
+  }
+
+  async function check() {
+    if (!reference) {
+      render(neutral);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/paystack/verify.php?reference=${encodeURIComponent(reference)}`,
+        { headers: { Accept: "application/json" } },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.status === "success") {
+        render(paid(data.amount, data.currency, data.recurring));
+      } else if (data.status === "abandoned" || data.status === "failed") {
+        render(notCompleted);
+      } else {
+        // "unknown", "pending", or anything new Paystack introduces: say
+        // nothing we cannot stand behind.
+        render(neutral);
+      }
+    } catch {
+      // If the check itself fails, fall back to wording that is true either
+      // way rather than guessing at an outcome.
+      render(neutral);
+    }
+  }
+
+  check();
+</script>
