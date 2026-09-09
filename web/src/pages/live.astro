@@ -24,6 +24,15 @@ const channel = site.youtubeChannels.streaming;
 const services = await getServices();
 const online = services.filter((s) => s.where !== "In person");
 
+/**
+ * The Sunday gathering, for the "come in person" panel below.
+ *
+ * Its time used to be typed into the paragraph by hand, so when the time was
+ * changed in Sanity this page kept showing the old one and contradicted the
+ * rest of the site. Read it from the same place everything else does.
+ */
+const sunday = services.find((s) => /revelation/i.test(s.name));
+
 const page = await getPage("live", {
   eyebrow: "Live",
   title: "Join us from wherever you are",
@@ -180,8 +189,8 @@ const page = await getPage("live", {
               Rather come in person?
             </h3>
             <p class="mt-4 text-sm leading-relaxed text-sand-600">
-              Revelation Sunday Service runs 8:00 – 10:00 am at {site.address.street},
-              {" "}{site.address.city}.
+              {sunday?.name ?? "Revelation Sunday Service"} runs {sunday?.time ?? "on Sunday mornings"}
+              {" "}at {site.address.street}, {site.address.city}.
             </p>
             <a href="/contact" class="btn-outline mt-6">Plan your visit</a>
           </div>

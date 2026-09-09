@@ -131,7 +131,10 @@ export const services: Service[] = [
   {
     name: "Revelation Sunday Service",
     when: "Every Sunday",
-    time: "8:00 – 10:00 am",
+    // Kept in step with the Sanity `service` document, which is what the site
+    // actually renders. This list is only the fallback for a build with no
+    // CMS configured, but a fallback that disagrees is worse than none.
+    time: "9:00 am – 12:00 pm",
     where: "In person",
     note: "Our main gathering for teaching and worship.",
   },
