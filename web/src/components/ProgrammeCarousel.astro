@@ -18,6 +18,26 @@ interface Props {
 
 const { programmes } = Astro.props;
 const many = programmes.length > 1;
+
+/**
+ * The wording on a programme's button.
+ *
+ * `linkLabel` is set per programme in Sanity, but the field's original initial
+ * value was "Find out more", so every programme created before now carries
+ * that string whether or not anyone chose it. It is therefore treated as "not
+ * chosen" and the destination decides the wording instead — a Google Meet link
+ * is something you join, a YouTube link is something you watch.
+ *
+ * Setting the field to anything else in the Studio still wins.
+ */
+function linkLabelFor(p: Programme): string {
+  if (p.linkLabel && p.linkLabel !== "Find out more") return p.linkLabel;
+
+  const url = p.link ?? "";
+  if (/youtube\.com|youtu\.be/i.test(url)) return "Watch on YouTube";
+  if (/facebook\.com|fb\.watch/i.test(url)) return "Watch on Facebook";
+  return "Click to join";
+}
 ---
 
 {
@@ -168,7 +188,7 @@ const many = programmes.length > 1;
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {p.linkLabel ?? "Find out more"}
+                    {linkLabelFor(p)}
                   </a>
                 )}
               </div>

@@ -76,7 +76,9 @@ export default defineType({
       name: "linkLabel",
       title: "Link button text",
       type: "string",
-      initialValue: "Find out more",
+      description:
+        'Leave blank and the button words itself from the link — "Watch on YouTube" for a YouTube link, "Click to join" for anything else. Fill this in only to override that.',
+      initialValue: "Click to join",
     }),
     defineField({
       name: "published",
