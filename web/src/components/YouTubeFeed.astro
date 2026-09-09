@@ -1,0 +1,298 @@
+---
+/**
+ * The channel's recent videos, played on this site rather than on YouTube.
+ *
+ * This is the replacement for the Elfsight widget the legacy media library
+ * used. Differences that matter:
+ *
+ *   - Nothing is loaded from YouTube until a visitor presses play. The grid is
+ *     thumbnails; the player is created on click. Elfsight's script ran on
+ *     every page view whether or not anyone watched.
+ *   - The list is fetched at runtime from /api/youtube/feed.php, so a sermon
+ *     posted this morning shows up without anyone rebuilding and re-uploading
+ *     the site.
+ *   - youtube-nocookie.com, so a visitor who never presses play is never
+ *     tracked by YouTube.
+ *
+ * Rendered empty and filled in by script: the list changes between builds, so
+ * baking it into the HTML would be stale the moment a new video is posted.
+ */
+
+import { site } from "../data/site";
+
+interface Props {
+  /** How many videos to show. */
+  limit?: number;
+  heading?: string;
+  intro?: string;
+  /** Show the on-air banner above the grid. The live page has its own. */
+  showLive?: boolean;
+}
+
+const {
+  limit = 12,
+  heading = "Recent teachings",
+  intro = "Watch here — you do not need to leave the site.",
+  showLive = true,
+} = Astro.props;
+---
+
+<section
+  class="yt-feed"
+  data-yt-feed
+  data-limit={String(limit)}
+  data-show-live={showLive ? "1" : "0"}
+>
+  <div class="flex flex-wrap items-end justify-between gap-6">
+    <div>
+      <h2 class="font-display text-3xl font-light text-navy-900 sm:text-4xl">
+        {heading}
+      </h2>
+      <p class="mt-3 max-w-xl text-sm leading-relaxed text-sand-600">{intro}</p>
+    </div>
+    <a
+      href={site.social.youtube}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="btn-outline">All videos on YouTube</a
+    >
+  </div>
+
+  {
+    showLive && (
+      <div
+        class="mt-8 hidden overflow-hidden rounded-3xl border border-red-200 bg-red-50"
+        data-yt-live
+        hidden
+      >
+        <div class="flex flex-wrap items-center gap-4 px-6 py-4">
+          <span class="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+            <span class="yt-pulse h-2 w-2 rounded-full bg-white" />
+            Live now
+          </span>
+          <p class="text-sm font-medium text-navy-900" data-yt-live-title />
+        </div>
+        <div class="yt-frame border-t border-red-200" data-yt-live-player />
+      </div>
+    )
+  }
+
+  <!-- Skeletons, so the section has its final shape before the fetch lands. -->
+  <div
+    class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+    data-yt-grid
+    aria-busy="true"
+  >
+    {
+      [0, 1, 2, 3, 4, 5].map(() => (
+        <div class="yt-skeleton overflow-hidden rounded-2xl border border-sand-200 bg-white">
+          <div class="aspect-video bg-sand-100" />
+          <div class="space-y-2 p-5">
+            <div class="h-3 w-4/5 rounded bg-sand-100" />
+            <div class="h-3 w-2/5 rounded bg-sand-100" />
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <p class="mt-6 hidden text-sm text-sand-500" data-yt-error hidden>
+    The video list could not be loaded just now. You can still
+    <a
+      href={site.social.youtube}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="underline">watch on YouTube</a
+    >.
+  </p>
+</section>
+
+<style>
+  .yt-frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+  }
+  .yt-frame :global(iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .yt-skeleton {
+    animation: yt-fade 1.4s ease-in-out infinite;
+  }
+  @keyframes yt-fade {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+  .yt-pulse {
+    animation: yt-blink 1.6s ease-in-out infinite;
+  }
+  @keyframes yt-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+  /* A visitor who prefers less motion gets a still badge and no shimmer. */
+  @media (prefers-reduced-motion: reduce) {
+    .yt-skeleton,
+    .yt-pulse {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  type Video = {
+    id: string;
+    title: string;
+    published: string;
+    thumbnail: string;
+  };
+
+  const ENDPOINT = "/api/youtube/feed.php";
+
+  function formatDate(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  /**
+   * Build the player only when asked. Until then a visitor has loaded nothing
+   * from YouTube, and youtube-nocookie keeps it that way for anyone who never
+   * presses play.
+   */
+  function playerFor(id: string, autoplay: boolean): HTMLIFrameElement {
+    const frame = document.createElement("iframe");
+    const params = new URLSearchParams({
+      rel: "0",
+      modestbranding: "1",
+      playsinline: "1",
+    });
+    if (autoplay) params.set("autoplay", "1");
+    frame.src = `https://www.youtube-nocookie.com/embed/${id}?${params}`;
+    frame.title = "Video player";
+    frame.allow =
+      "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    frame.allowFullscreen = true;
+    frame.loading = "lazy";
+    return frame;
+  }
+
+  function card(video: Video): HTMLElement {
+    const wrap = document.createElement("article");
+    wrap.className =
+      "group overflow-hidden rounded-2xl border border-sand-200 bg-white transition hover:border-gold-400 hover:shadow-lg";
+
+    const shell = document.createElement("div");
+    shell.className = "yt-frame";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className =
+      "absolute inset-0 h-full w-full cursor-pointer border-0 p-0";
+    button.setAttribute("aria-label", `Play: ${video.title}`);
+
+    const img = document.createElement("img");
+    img.src = video.thumbnail;
+    img.alt = "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.className = "h-full w-full object-cover";
+
+    const glyph = document.createElement("span");
+    glyph.className =
+      "absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white transition group-hover:bg-gold-500 group-hover:text-navy-950";
+    glyph.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="currentColor" class="h-7 w-7" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+
+    button.append(img, glyph);
+    shell.append(button);
+
+    button.addEventListener(
+      "click",
+      () => {
+        shell.replaceChildren(playerFor(video.id, true));
+      },
+      { once: true },
+    );
+
+    const body = document.createElement("div");
+    body.className = "p-5";
+
+    const title = document.createElement("h3");
+    title.className = "text-sm font-semibold leading-snug text-navy-900";
+    title.textContent = video.title;
+
+    const date = document.createElement("p");
+    date.className = "mt-2 text-xs text-sand-500";
+    date.textContent = formatDate(video.published);
+
+    body.append(title, date);
+    wrap.append(shell, body);
+    return wrap;
+  }
+
+  async function init(root: HTMLElement) {
+    const grid = root.querySelector<HTMLElement>("[data-yt-grid]");
+    const errorEl = root.querySelector<HTMLElement>("[data-yt-error]");
+    const liveEl = root.querySelector<HTMLElement>("[data-yt-live]");
+    const limit = Number(root.dataset.limit ?? "12");
+    const wantsLive = root.dataset.showLive === "1";
+    if (!grid) return;
+
+    let data: { live: any; videos: Video[] } | null = null;
+    try {
+      const res = await fetch(ENDPOINT, { headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.json();
+    } catch {
+      grid.remove();
+      errorEl?.removeAttribute("hidden");
+      errorEl?.classList.remove("hidden");
+      return;
+    }
+
+    const videos = Array.isArray(data?.videos) ? data!.videos : [];
+    if (!videos.length) {
+      grid.remove();
+      errorEl?.removeAttribute("hidden");
+      errorEl?.classList.remove("hidden");
+      return;
+    }
+
+    if (wantsLive && data?.live && liveEl) {
+      const titleEl = liveEl.querySelector<HTMLElement>("[data-yt-live-title]");
+      const playerEl = liveEl.querySelector<HTMLElement>("[data-yt-live-player]");
+      if (titleEl) titleEl.textContent = data.live.title ?? "We are live now";
+      // Not autoplayed: sound starting on its own is hostile, and mobile
+      // browsers block it anyway.
+      if (playerEl) playerEl.append(playerFor(data.live.id, false));
+      liveEl.removeAttribute("hidden");
+      liveEl.classList.remove("hidden");
+    }
+
+    grid.replaceChildren(...videos.slice(0, limit).map(card));
+    grid.removeAttribute("aria-busy");
+  }
+
+  document
+    .querySelectorAll<HTMLElement>("[data-yt-feed]")
+    .forEach((el) => void init(el));
+</script>

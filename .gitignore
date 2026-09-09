@@ -39,3 +39,6 @@ keys.md
 .env
 web/.env
 .ftp-credentials
+
+# Playwright MCP scratch output
+.playwright-mcp/

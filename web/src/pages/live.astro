@@ -10,11 +10,17 @@ import { getPage, getServices } from "../lib/content";
  * displayed." That endpoint only serves a player while a stream is actually
  * live, and it breaks when the channel has no active broadcast.
  *
- * This page instead links out by default and only embeds on request, so it
- * never shows a broken player. A real live/offline badge needs the YouTube
- * Data API, which is Phase 3.
+ * The page now asks `/api/youtube/feed.php` whether the channel is on air and
+ * shows the state that is actually true, so a broken player is never offered.
+ * No YouTube Data API key is involved: the check reads
+ * liveBroadcastDetails.isLiveNow from the video's public watch page, and the
+ * answer is cached server-side.
+ *
+ * `live_stream?channel=` is still the address used for a running broadcast.
+ * It is permanent — it always resolves to whatever that channel is streaming,
+ * so nobody has to paste a new link each week.
  */
-const channel = site.youtubeChannels.primary;
+const channel = site.youtubeChannels.streaming;
 const services = await getServices();
 const online = services.filter((s) => s.where !== "In person");
 
@@ -45,15 +51,40 @@ const page = await getPage("live", {
             data-reveal
           >
             <div class="aspect-video w-full" data-player>
-              <!-- Click-to-load keeps YouTube's cookies and ~1MB of player
-                   JS off the page until someone actually asks for it. -->
+              <!--
+                Three states, decided by /api/youtube/feed.php rather than
+                guessed. The old button could only offer "load the player and
+                find out", because a static page cannot know whether a service
+                is on air. Click-to-load is kept in every state: YouTube's
+                cookies and ~1MB of player JS stay off the page until someone
+                actually asks for it.
+              -->
+              <div
+                class="grid h-full w-full place-items-center bg-navy-900"
+                data-state="checking"
+              >
+                <span class="flex flex-col items-center gap-4 p-8 text-center">
+                  <span
+                    class="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-gold-500"
+                    aria-hidden="true"></span>
+                  <span class="text-sm text-white/60">Checking if we are live…</span>
+                </span>
+              </div>
+
               <button
                 type="button"
-                class="group grid h-full w-full place-items-center bg-navy-900 transition hover:bg-navy-800"
-                data-load-player
+                class="group hidden h-full w-full place-items-center bg-navy-900 transition hover:bg-navy-800"
+                data-state="live"
                 data-channel={channel}
+                hidden
               >
                 <span class="flex flex-col items-center gap-5 p-8 text-center">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white"
+                  >
+                    <span class="live-dot h-2 w-2 rounded-full bg-white"></span>
+                    Live now
+                  </span>
                   <span
                     class="grid h-20 w-20 place-items-center rounded-full border-2 border-gold-500 text-gold-500 transition group-hover:scale-105 group-hover:bg-gold-500 group-hover:text-navy-950"
                     aria-hidden="true"
@@ -62,13 +93,38 @@ const page = await getPage("live", {
                       <path d="M7 4l12 8-12 8z"></path>
                     </svg>
                   </span>
+                  <span
+                    class="max-w-md font-display text-2xl font-light text-white"
+                    data-live-title>We are live</span
+                  >
+                  <span class="text-sm text-white/60">Press play to join the service</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="group hidden h-full w-full place-items-center bg-navy-900 transition hover:bg-navy-800"
+                data-state="offline"
+                data-channel={channel}
+                hidden
+              >
+                <span class="flex flex-col items-center gap-5 p-8 text-center">
+                  <span
+                    class="grid h-20 w-20 place-items-center rounded-full border-2 border-white/25 text-white/60 transition group-hover:border-gold-500 group-hover:text-gold-500"
+                    aria-hidden="true"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="ml-1 h-8 w-8">
+                      <path d="M7 4l12 8-12 8z"></path>
+                    </svg>
+                  </span>
                   <span class="font-display text-2xl font-light text-white">
-                    Load the live player
+                    Not live at the moment
                   </span>
-                  <span class="max-w-sm text-sm text-white/60">
-                    If a service is streaming now it will start here. If not,
-                    you will see the channel's most recent broadcast.
-                  </span>
+                  <span
+                    class="max-w-sm text-sm text-white/60"
+                    data-offline-note
+                    >Watch the most recent broadcast, or see the times below.</span
+                  >
                 </span>
               </button>
             </div>
@@ -136,22 +192,113 @@ const page = await getPage("live", {
 </Base>
 
 <script>
-  const trigger = document.querySelector<HTMLElement>("[data-load-player]");
+  /**
+   * Ask the server whether the channel is on air, then show the matching
+   * state. The endpoint caches its answer, so a congregation arriving at once
+   * costs one check rather than one each.
+   *
+   * The page is useful without this: if the check fails we fall through to the
+   * offline state, which still plays the channel's most recent broadcast.
+   */
   const holder = document.querySelector<HTMLElement>("[data-player]");
 
-  trigger?.addEventListener("click", () => {
-    const channel = trigger.dataset.channel;
-    if (!holder || !channel) return;
+  const show = (name: string) => {
+    holder?.querySelectorAll<HTMLElement>("[data-state]").forEach((el) => {
+      const match = el.dataset.state === name;
+      el.hidden = !match;
+      el.classList.toggle("hidden", !match);
+      // The buttons are `grid` when visible; `hidden` must win when not.
+      if (match && el.tagName === "BUTTON") el.classList.add("grid");
+    });
+  };
+
+  /**
+   * `live_stream?channel=` is the permanent address of whatever that channel
+   * is broadcasting — it never changes, so nobody has to paste a new link each
+   * week. When a specific video is known, that is used instead, since it also
+   * works once the broadcast has ended.
+   */
+  const play = (videoId: string | null, channel: string | undefined) => {
+    if (!holder) return;
+    const src = videoId
+      ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`
+      : `https://www.youtube.com/embed/live_stream?channel=${channel}&autoplay=1`;
 
     const frame = document.createElement("iframe");
-    frame.src = `https://www.youtube.com/embed/live_stream?channel=${channel}&autoplay=1`;
+    frame.src = src;
     frame.title = "Live stream";
     frame.className = "h-full w-full";
     frame.allow =
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     frame.allowFullscreen = true;
     frame.referrerPolicy = "strict-origin-when-cross-origin";
-
     holder.replaceChildren(frame);
-  });
+  };
+
+  const wire = (state: string, videoId: string | null) => {
+    const btn = holder?.querySelector<HTMLElement>(`[data-state="${state}"]`);
+    btn?.addEventListener("click", () => play(videoId, btn.dataset.channel), {
+      once: true,
+    });
+  };
+
+  async function check() {
+    let data: { live?: { id: string; title?: string } | null; videos?: Array<{ id: string; title: string }> } | null =
+      null;
+
+    try {
+      const res = await fetch("/api/youtube/feed.php", {
+        headers: { Accept: "application/json" },
+      });
+      if (res.ok) data = await res.json();
+    } catch {
+      /* fall through to offline */
+    }
+
+    if (data?.live?.id) {
+      const title = holder?.querySelector<HTMLElement>("[data-live-title]");
+      if (title && data.live.title) title.textContent = data.live.title;
+      wire("live", data.live.id);
+      show("live");
+      return;
+    }
+
+    const latest = data?.videos?.[0] ?? null;
+    if (latest) {
+      const note = holder?.querySelector<HTMLElement>("[data-offline-note]");
+      if (note) note.textContent = `Most recent: ${latest.title}`;
+    }
+    wire("offline", latest?.id ?? null);
+    show("offline");
+  }
+
+  void check();
+
+  // While someone sits on the page waiting for a service to start, keep
+  // checking — but only while the tab is actually in front of them.
+  setInterval(() => {
+    if (document.visibilityState === "visible" && !holder?.querySelector("iframe")) {
+      void check();
+    }
+  }, 60_000);
 </script>
+
+<style>
+  .live-dot {
+    animation: live-blink 1.6s ease-in-out infinite;
+  }
+  @keyframes live-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot {
+      animation: none;
+    }
+  }
+</style>

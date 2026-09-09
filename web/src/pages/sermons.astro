@@ -3,6 +3,7 @@ import { Image } from "astro:assets";
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
 import SanityImage from "../components/SanityImage.astro";
+import YouTubeFeed from "../components/YouTubeFeed.astro";
 import { site } from "../data/site";
 import { mediaItems as localItems, series } from "../data/media";
 import { getMediaItems, getPage } from "../lib/content";
@@ -324,6 +325,24 @@ const kindLabel: Record<string, string> = {
       >
         Nothing matches that search yet.
       </p>
+    </div>
+  </section>
+
+  {/* ==================================================================
+      LATEST FROM YOUTUBE
+
+      Replaces the Elfsight gallery the legacy Media Library used. The list
+      is fetched at runtime, so a sermon posted this morning appears without
+      anyone rebuilding the site — unlike the curated grid above, which is
+      part of the build. Playback happens here rather than on YouTube.
+      ================================================================== */}
+  <section class="section bg-sand-50">
+    <div class="shell">
+      <YouTubeFeed
+        limit={12}
+        heading="Latest from the channel"
+        intro="Every new teaching, as it is posted. Press play to watch here — nothing loads from YouTube until you do."
+      />
     </div>
   </section>
 

@@ -38,7 +38,15 @@ export const site = {
   social: {
     facebook: "https://www.facebook.com/wordsofeternallifeministries",
     instagram: "https://www.instagram.com/w_e_l_m/",
-    youtube: "https://www.youtube.com/@gracewordtv",
+    /**
+     * The channel services stream on and sermons are posted to, confirmed by
+     * the ministry 2026-09-09. It is @faithjosephwisalth / "Faith Joseph
+     * Wisalth", the same channel as youtubeChannels.streaming.
+     *
+     * @gracewordtv is a different channel ("GraceWord TV") that the legacy
+     * site linked to. Links pointing there sent people to the wrong place.
+     */
+    youtube: "https://www.youtube.com/@faithjosephwisalth",
   },
   /**
    * The ministry's own artwork bills him as "Prophet Dr. Faith Joseph" and
@@ -51,7 +59,17 @@ export const site = {
     honorific: "Prophet",
   },
   /** Channels behind the two embeds on the legacy LiveStream page. */
+  /**
+   * The ministry has two YouTube channels. `streaming` is the one services go
+   * out on and the one the media library lists — confirmed 2026-09-09. It is
+   * also hard-coded in `public/api/youtube/feed.php`, which cannot import
+   * this file; change both together.
+   *
+   * `primary` is kept because the legacy site used it and older links point
+   * at it. Nothing renders from it today.
+   */
   youtubeChannels: {
+    streaming: "UCxlvklqt9K0AMb4NV18jGsA",
     primary: "UCylwhCv0356yu2sIpuBwIYQ",
     secondary: "UCxlvklqt9K0AMb4NV18jGsA",
   },
