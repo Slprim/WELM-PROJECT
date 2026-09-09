@@ -403,7 +403,46 @@ export async function getProgrammes(): Promise<Programme[]> {
      }`,
     { today },
   );
-  return remote ?? [];
+  return (remote ?? []).map(correctStaleChannelLink);
+}
+
+/**
+ * TEMPORARY — a stale link the CMS is still serving.
+ *
+ * Programme links point at @gracewordtv ("GraceWord TV"), which is not the
+ * ministry's channel. Services and sermons are on @faithjosephwisalth. The
+ * Studio edit to fix this has been attempted several times and has not saved,
+ * and until it does the site sends people to someone else's channel.
+ *
+ * This only rewrites the ONE known-wrong value. The moment that document is
+ * corrected in Sanity the condition stops matching and the CMS value is used
+ * verbatim — so this can never mask a future edit, which is the whole reason
+ * it is written as a match rather than an unconditional override.
+ *
+ * DELETE THIS once programme-time-with-faith-joseph carries the right link.
+ */
+const STALE_CHANNEL = /youtube\.com\/@gracewordtv\/?$/i;
+const TIME_WITH_FAITH_JOSEPH_PLAYLIST =
+  "https://www.youtube.com/watch?v=0eLuzXKc3uc&list=PLeoHE37CRjm7Cx2kSCoFMxaU8cf-ZuSFz";
+
+/** Each stale value is matched exactly, so a corrected one passes through. */
+const STALE_TAGLINE = "Streaming live on GraceWordTV";
+const STALE_VENUE = "YouTube — GraceWordTV";
+
+function correctStaleChannelLink(p: Programme): Programme {
+  const stale = p.link ? STALE_CHANNEL.test(p.link.trim()) : false;
+  if (!stale) return p;
+
+  return {
+    ...p,
+    link: TIME_WITH_FAITH_JOSEPH_PLAYLIST,
+    // The wording names the wrong channel too. Only the exact strings the
+    // documents carry today are replaced — anything reworded in the Studio is
+    // left alone.
+    tagline:
+      p.tagline?.trim() === STALE_TAGLINE ? "Streaming live on YouTube" : p.tagline,
+    venue: p.venue?.trim() === STALE_VENUE ? "YouTube" : p.venue,
+  };
 }
 
 export type HeroSlide = {
