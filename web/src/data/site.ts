@@ -20,12 +20,20 @@ export const site = {
   // (img/Prgrms/Pro&Power Conf.jpg and img/Themes/Year/Theme 2023.jpg).
   // Worth confirming with the client that both are still in service.
   phones: ["0545195648", "0549480591"],
+  /**
+   * The meeting place. Changed 2026-09-09 from the Cambridge Centre of
+   * Excellence, Dzorwulu.
+   *
+   * mapsUrl is a search link rather than a dropped pin: a pin needs the
+   * venue's real coordinates, which nobody has supplied yet. Replace it with
+   * the place URL from Google Maps once someone confirms the exact spot.
+   */
   address: {
-    street: "Cambridge Centre of Excellence, Dzorwulu",
-    city: "Accra",
+    street: "Grace Kingdom Auditorium, Seven Days",
+    city: "Amasaman, Accra",
     country: "Ghana",
     mapsUrl:
-      "https://www.google.com/maps/place/Cambridge+Center+of+Ex...+Dzorwulu/@5.6029428,-0.2118874,17z",
+      "https://www.google.com/maps/search/?api=1&query=Grace+Kingdom+Auditorium+Seven+Days+Amasaman+Accra",
   },
   social: {
     facebook: "https://www.facebook.com/wordsofeternallifeministries",
