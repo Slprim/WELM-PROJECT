@@ -1,9 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
-import { site, services } from "../data/site";
+import { site } from "../data/site";
 import { mission } from "../data/about";
-import { getPage, getFaqs } from "../lib/content";
+import { getPage, getFaqs, getServices } from "../lib/content";
 
 /**
  * The legacy FAQ page was a maintenance notice, so there was nothing to
@@ -16,12 +16,22 @@ import { getPage, getFaqs } from "../lib/content";
  * unpublished in the CMS rather than answered with a guess, and the page
  * names them instead.
  */
-const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
+/**
+ * From the CMS, not the hardcoded list - this answer states the meeting
+ * times and was drifting out of date every time they changed in Sanity.
+ */
+const services = await getServices();
+const sundays = services.filter(
+  (s) => s.where === "In person" && /sunday/i.test(s.when),
+);
+const sundayText = sundays.length
+  ? sundays.map((s) => `${s.name} at ${s.time}`).join(", and ")
+  : "our Sunday service";
 
 const fallbackFaqs = [
   {
     q: "When and where do you meet?",
-    a: `${sunday.name} runs ${sunday.time} every Sunday at the ${site.address.street}, ${site.address.city}. There are also gatherings every weekday — the Declaration Hour at 5:00 am, Lunch Hour at noon and I AM GOD at 5:00 pm.`,
+    a: `Every Sunday we meet for ${sundayText}, at ${site.address.street}, ${site.address.city}. There are also gatherings every weekday — see the Live page for the full week.`,
   },
   {
     q: "I have never been to a service before. What happens?",

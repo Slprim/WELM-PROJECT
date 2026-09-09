@@ -1,8 +1,8 @@
 ---
 import Base from "../layouts/Base.astro";
 import PageHeader from "../components/PageHeader.astro";
-import { site, services } from "../data/site";
-import { getPage } from "../lib/content";
+import { site } from "../data/site";
+import { getPage, getServices } from "../lib/content";
 
 /**
  * Contact, with the legacy Help page folded in — that page held nothing but
@@ -13,7 +13,17 @@ import { getPage } from "../lib/content";
  * the ministry puts on its own event graphics are published here; the others
  * need confirming before they go back up.
  */
-const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
+/**
+ * Sunday gatherings, from the CMS.
+ *
+ * This page used to read the hardcoded list in data/site.ts, so a service
+ * added or retimed in Sanity never reached it. There is now more than one
+ * Sunday service, so it lists them all rather than singling one out.
+ */
+const services = await getServices();
+const sundays = services.filter(
+  (s) => s.where === "In person" && /sunday/i.test(s.when),
+);
 
 const reasons = [
   "I'd like to plan a visit",
@@ -156,10 +166,14 @@ const page = await getPage("contact", {
               <p class="text-xs uppercase tracking-[0.2em] text-gold-400">
                 Sundays
               </p>
-              <p class="mt-3 text-white">
-                {sunday.name}
-                <span class="block text-white/60">{sunday.time}</span>
-              </p>
+              {
+                sundays.map((s) => (
+                  <p class="mt-3 text-white">
+                    {s.name}
+                    <span class="block text-white/60">{s.time}</span>
+                  </p>
+                ))
+              }
             </div>
           </div>
 
