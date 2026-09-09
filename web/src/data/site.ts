@@ -121,7 +121,29 @@ export type Service = {
   time: string;
   where: string;
   note?: string;
+  /** e.g. "English" or "Twi". Only shown where it distinguishes two services. */
+  language?: string;
 };
+
+/**
+ * The language label for a gathering.
+ *
+ * Prefers the Language field set in Sanity. Falls back to reading "Twi" out of
+ * the name, for services created before that field existed; anything else is
+ * assumed to be in English.
+ *
+ * This lives here rather than in each page because it was written inline in a
+ * template once and silently returned the wrong answer - a regex literal
+ * inside a JSX expression is not worth the risk when the result is a label
+ * telling people which service to attend.
+ */
+export function serviceLanguage(s: {
+  name: string;
+  language?: string | null;
+}): string {
+  if (s.language) return s.language;
+  return /twi/i.test(s.name) ? "Twi" : "English";
+}
 
 /**
  * Pulled from the legacy homepage. The "Sataurday" typo in the original
@@ -129,8 +151,17 @@ export type Service = {
  */
 export const services: Service[] = [
   {
+    name: "Twi Service",
+    when: "Every Sunday",
+    time: "7 am – 8:30 am",
+    where: "In person",
+    language: "Twi",
+    note: "The Sunday gathering held in Twi.",
+  },
+  {
     name: "Revelation Sunday Service",
     when: "Every Sunday",
+    language: "English",
     // Kept in step with the Sanity `service` document, which is what the site
     // actually renders. This list is only the fallback for a build with no
     // CMS configured, but a fallback that disagrees is worse than none.

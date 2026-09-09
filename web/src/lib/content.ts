@@ -116,7 +116,7 @@ export type ServiceWithImages = Service & {
 export async function getServices(): Promise<ServiceWithImages[]> {
   const remote = await query<ServiceWithImages[]>(
     `*[_type == "service"] | order(order asc) {
-       name, when, time, where, note,
+       name, when, time, where, note, language,
        "images": images[]{
          "url": asset->url,
          "alt": alt,

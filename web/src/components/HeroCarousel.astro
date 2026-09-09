@@ -26,7 +26,14 @@ interface Props {
 
 const { slides = [] } = Astro.props;
 
-const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
+/**
+ * Every Sunday gathering, earliest first. This rail used to name the
+ * "Revelation" service alone, so the 7am Twi service was missing from the
+ * first thing a visitor sees.
+ */
+const sundays = services.filter(
+  (s) => s.where === "In person" && /sunday/i.test(s.when),
+);
 
 type Slide = {
   kind: "video" | "image";
@@ -303,7 +310,13 @@ const rendered: Slide[] =
         <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">
           This Sunday
         </p>
-        <p class="mt-2 text-sm text-white">{sunday.name} · {sunday.time}</p>
+        {
+          sundays.map((s) => (
+            <p class="mt-2 text-sm text-white">
+              {s.name} · {s.time}
+            </p>
+          ))
+        }
       </div>
       <div class="px-8 py-6">
         <p class="text-[0.65rem] uppercase tracking-[0.2em] text-gold-400">

@@ -5,7 +5,7 @@ import HeroCarousel from "../components/HeroCarousel.astro";
 import ImageSlideshow from "../components/ImageSlideshow.astro";
 import ThemeSection from "../components/ThemeSection.astro";
 import ProgrammeCarousel from "../components/ProgrammeCarousel.astro";
-import { site } from "../data/site";
+import { site, serviceLanguage } from "../data/site";
 import {
   getServices,
   getMonthlyThemes,
@@ -22,7 +22,30 @@ const yearlyThemes = await getThemes();
 const programmes = await getProgrammes();
 const heroSlides = await getHeroSlides();
 
-const sunday = services.find((s) => s.name.startsWith("Revelation"))!;
+/**
+ * Sunday gatherings, in the order set in Sanity (getServices sorts by it).
+ *
+ * There is more than one now — a Twi service at 7am before the English one —
+ * so the feature card lists them all rather than singling out "Revelation" by
+ * name, which is what it used to do and which hid the Twi service in a small
+ * side list underneath.
+ */
+const sundays = services.filter(
+  (s) => s.where === "In person" && /sunday/i.test(s.when),
+);
+
+/** The card's photos and standfirst come from the main gathering. */
+const sunday =
+  services.find((s) => s.name.startsWith("Revelation")) ?? sundays[0]!;
+
+/**
+ * Only label a service's language when there is another Sunday service to
+ * tell it apart from — on its own, "English" under one service says nothing.
+ * Set the Language field in Sanity; the name is only a fallback for services
+ * that predate that field.
+ */
+const showLanguage = sundays.length > 1;
+
 const daily = services.filter((s) => s.where === "Online");
 const gatherings = services.filter((s) => s.where === "In person");
 ---
@@ -141,12 +164,30 @@ const gatherings = services.filter((s) => s.where === "In person");
               {sunday.when}
             </p>
             <h3 class="mt-4 font-display text-4xl font-light text-white">
-              {sunday.name}
+              Sunday at the house
             </h3>
             <p class="mt-3 max-w-md text-white/70">{sunday.note}</p>
-            <p class="mt-6 text-sm font-medium text-gold-300">
-              {sunday.time} · {sunday.where}
-            </p>
+
+            {/* Both Sunday services, earliest first. */}
+            <ul class="mt-7 space-y-4">
+              {
+                sundays.map((s) => (
+                  <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-white/15 pt-4 first:border-0 first:pt-0">
+                    <span class="font-display text-2xl font-light text-white">
+                      {s.name}
+                    </span>
+                    {showLanguage && (
+                      <span class="rounded-full border border-gold-400/40 px-2.5 py-0.5 text-[0.65rem] uppercase tracking-[0.15em] text-gold-300">
+                        {serviceLanguage(s)}
+                      </span>
+                    )}
+                    <span class="w-full text-sm font-medium text-gold-300">
+                      {s.time} · {s.where}
+                    </span>
+                  </li>
+                ))
+              }
+            </ul>
           </div>
         </article>
 
@@ -185,7 +226,9 @@ const gatherings = services.filter((s) => s.where === "In person");
           <ul class="mt-7 space-y-6">
             {
               gatherings
-                .filter((s) => !s.name.startsWith("Revelation"))
+                // Sunday services have the feature card above; this list is
+                // for everything else that meets in person.
+                .filter((s) => !sundays.includes(s))
                 .map((s) => (
                   <li class="border-b border-white/10 pb-5 last:border-0 last:pb-0">
                     <span class="block font-display text-xl font-light text-white">

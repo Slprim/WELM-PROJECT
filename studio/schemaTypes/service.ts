@@ -32,6 +32,20 @@ export default defineType({
       },
       validation: (r) => r.required(),
     }),
+    defineField({
+      name: "language",
+      title: "Language",
+      type: "string",
+      description:
+        'The language this gathering is held in, e.g. "English" or "Twi". Shown as a label on the home page so people can tell two Sunday services apart. Leave blank if it does not need saying.',
+      options: {
+        list: [
+          { title: "English", value: "English" },
+          { title: "Twi", value: "Twi" },
+          { title: "English & Twi", value: "English & Twi" },
+        ],
+      },
+    }),
     defineField({ name: "note", type: "text", rows: 2, title: "One-line description" }),
     defineField({
       name: "images",
