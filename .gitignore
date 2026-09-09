@@ -42,3 +42,8 @@ web/.env
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Playwright screenshots from QA runs
+*.playwright.png
+local-*.png
+live-*.png

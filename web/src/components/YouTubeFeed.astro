@@ -107,11 +107,24 @@ const {
   </p>
 </section>
 
-<style>
+{/*
+  is:global is required, not stylistic. Astro scopes styles by appending a
+  data-astro-cid attribute to the selector AND to elements in this template.
+  The cards below are built in JavaScript, so they never receive that
+  attribute and a scoped `.yt-frame` rule cannot match them.
+
+  When that happened the frame had no `position: relative`, so each card's
+  `absolute inset-0` play button positioned itself against the PAGE instead
+  of its card - one video covered the whole screen and a click anywhere
+  started a video. The JS also sets these as inline styles, so containment
+  survives even if this stylesheet fails to load.
+*/}
+<style is:global>
   .yt-frame {
     position: relative;
     aspect-ratio: 16 / 9;
     background: #000;
+    overflow: hidden;
   }
   .yt-frame :global(iframe) {
     position: absolute;
@@ -192,6 +205,13 @@ const {
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
     frame.allowFullscreen = true;
     frame.loading = "lazy";
+    // Same reasoning as the shell: sized inline so the player fills its own
+    // card and nothing else, with or without the stylesheet.
+    frame.style.position = "absolute";
+    frame.style.inset = "0";
+    frame.style.width = "100%";
+    frame.style.height = "100%";
+    frame.style.border = "0";
     return frame;
   }
 
@@ -202,6 +222,12 @@ const {
 
     const shell = document.createElement("div");
     shell.className = "yt-frame";
+    // Belt and braces. The play button inside is absolutely positioned, so if
+    // these ever fail to apply it escapes its card and covers the page.
+    shell.style.position = "relative";
+    shell.style.aspectRatio = "16 / 9";
+    shell.style.overflow = "hidden";
+    shell.style.background = "#000";
 
     const button = document.createElement("button");
     button.type = "button";
