@@ -257,16 +257,23 @@ const isActive = (href: string) =>
 
     const update = () => {
       const scrolled = window.scrollY > 24;
+      // The hero's logo reveal is a white clip shown without the navy wash,
+      // so at the top of the page the white nav would sit on white. The
+      // carousel flags it on <html>; while it does, the bar goes solid as
+      // if scrolled. The utility strip stays, since the page is still at
+      // the top.
+      const heroClean = document.documentElement.hasAttribute("data-hero-clean");
+      const solid = scrolled || heroClean;
       header.dataset.atTop = String(!scrolled);
       // `bg-transparent` has to come off as `bg-navy-950/95` goes on. Both
       // are utilities of equal specificity, so leaving both applied lets
       // stylesheet order decide — and transparent was winning, which left
       // the nav unreadable over light sections.
-      bar.classList.toggle("bg-navy-950/95", scrolled);
-      bar.classList.toggle("bg-transparent", !scrolled);
-      bar.classList.toggle("backdrop-blur-md", scrolled);
-      bar.classList.toggle("border-white/10", scrolled);
-      bar.classList.toggle("border-transparent", !scrolled);
+      bar.classList.toggle("bg-navy-950/95", solid);
+      bar.classList.toggle("bg-transparent", !solid);
+      bar.classList.toggle("backdrop-blur-md", solid);
+      bar.classList.toggle("border-white/10", solid);
+      bar.classList.toggle("border-transparent", !solid);
       if (strip) {
         strip.classList.toggle("!h-0", scrolled);
         strip.classList.toggle("opacity-0", scrolled);
@@ -284,6 +291,10 @@ const isActive = (href: string) =>
       },
       { passive: true },
     );
+
+    // The carousel announces clean-slide changes rather than the header
+    // polling for them.
+    window.addEventListener("hero:clean", update);
 
     update();
   }

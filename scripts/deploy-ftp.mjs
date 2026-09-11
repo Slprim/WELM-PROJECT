@@ -75,7 +75,39 @@ try {
       if (info.name) process.stdout.write(`\r  uploading ${info.name.padEnd(52).slice(0, 52)}`);
     });
     await client.ensureDir(REMOTE);
-    await client.uploadFromDir(LOCAL, REMOTE);
+
+    // ORDER MATTERS. Astro fingerprints its CSS and JS (_astro/Base.<hash>.css),
+    // and every build that touches a style produces a new name. A plain
+    // uploadFromDir walks the tree in directory order, which put index.html
+    // up FIRST and _astro/ LAST - so for the two or three minutes in between,
+    // the new HTML pointed at a stylesheet that was not on the server yet, and
+    // every visitor in that window got an unstyled page. It happened, live.
+    //
+    // So: hashed assets first. Old hashed files are never deleted, which means
+    // whichever HTML a visitor has - old or new - always finds its stylesheet.
+    // Then the rest, with the HTML pages last so they only go live once
+    // everything they reference is already there.
+    const entries = fs.readdirSync(LOCAL, { withFileTypes: true });
+    const dirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    const files = entries.filter((e) => e.isFile()).map((e) => e.name);
+
+    const assetDirs = ["_astro", "video", "api"].filter((d) => dirs.includes(d));
+    const pageDirs = dirs.filter((d) => !assetDirs.includes(d));
+    const nonHtmlFiles = files.filter((f) => !f.endsWith(".html"));
+    const htmlFiles = files.filter((f) => f.endsWith(".html"));
+
+    const upDir = async (d) => {
+      await client.ensureDir(`${REMOTE}/${d}`);
+      await client.uploadFromDir(path.join(LOCAL, d), `${REMOTE}/${d}`);
+      await client.cd(REMOTE);
+    };
+    const upFile = async (f) => client.uploadFrom(path.join(LOCAL, f), `${REMOTE}/${f}`);
+
+    for (const d of assetDirs) await upDir(d);        // 1. fingerprinted assets
+    for (const f of nonHtmlFiles) await upFile(f);    // 2. .htaccess, robots, sitemaps, favicons
+    for (const d of pageDirs) await upDir(d);         // 3. page directories (each holds an index.html)
+    for (const f of htmlFiles) await upFile(f);       // 4. root index.html and 404.html - last
+
     client.trackProgress();
     console.log(`\n  uploaded in ${((Date.now() - started) / 1000).toFixed(1)}s`);
 

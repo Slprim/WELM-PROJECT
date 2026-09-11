@@ -9,8 +9,8 @@ import visionImage from "../assets/vision.jpg";
 /**
  * The homepage hero carousel — the legacy site's video banner, rebuilt.
  *
- * Same three slides as the Bootstrap original (welcome video, Metadidomi,
- * the vision) and the same captions, but without jQuery or Bootstrap, and
+ * The logo reveal, then the same three slides as the Bootstrap original
+ * (welcome video, Metadidomi, the vision) with the same captions, but without jQuery or Bootstrap, and
  * meeting WCAG 2.2.2: auto-advancing content has a visible pause control,
  * stops on hover and on keyboard focus, and never starts at all under
  * `prefers-reduced-motion`.
@@ -51,10 +51,30 @@ type Slide = {
   alt?: string;
   /** The video slide holds longer so the clip can breathe. */
   duration: number;
+  /**
+   * Shown as-is: no navy wash, no caption, full opacity. For a clip that IS
+   * the message — the logo reveal ends on a white card carrying the name, so
+   * dimming it and writing "Kingdom of Gods" over the top would ruin it and
+   * say the same thing twice.
+   */
+  clean?: boolean;
+  /** Videos loop unless told not to. A reveal should hold its last frame. */
+  loop?: boolean;
 };
 
 /** The slides the site ships with, used until any are published in Sanity. */
 const builtIn: Slide[] = [
+  {
+    kind: "video",
+    videoUrl: "/video/logo-reveal.mp4",
+    poster: "/video/logo-reveal-poster.jpg",
+    // Title is the accessible name of the slide only; nothing is rendered.
+    title: "Kingdom of Gods",
+    clean: true,
+    loop: false,
+    // The clip is 6.4s. Hold the finished logo for a beat, then move on.
+    duration: 6800,
+  },
   {
     kind: "video",
     videoUrl: "/video/hero.mp4",
@@ -110,7 +130,15 @@ const rendered: Slide[] =
   class="relative isolate flex min-h-[92svh] items-end overflow-hidden bg-navy-950"
   aria-roledescription="carousel"
   aria-label="Welcome"
+  data-clean={rendered[0]?.clean ? "true" : undefined}
 >
+  {/* Runs during parse, before the bundled scripts, so the fixed header is
+      already solid on first paint when the opening slide is clean. */}
+  {rendered[0]?.clean && (
+    <script is:inline>
+      document.documentElement.setAttribute("data-hero-clean", "");
+    </script>
+  )}
   <!-- ===================== SLIDES ===================== -->
   <div class="absolute inset-0 -z-10">
     {
@@ -119,18 +147,27 @@ const rendered: Slide[] =
           class="hero-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ease-out"
           data-slide={i}
           data-duration={slide.duration}
+          data-clean={slide.clean ? "true" : undefined}
           role="group"
           aria-roledescription="slide"
           aria-label={`${i + 1} of ${rendered.length}: ${slide.title}`}
         >
           {slide.kind === "video" ? (
             <video
-              class="hero-video h-full w-full object-cover object-center opacity-55"
+              class={`hero-video h-full w-full object-center ${
+                slide.clean
+                  ? // Contain, not cover: a phone screen is tall and cover
+                    // would crop the sides of a 16:9 clip - the logo mark and
+                    // half the name. The section is white while this shows,
+                    // so the letterbox is invisible.
+                    "object-contain"
+                  : "object-cover opacity-55"
+              }`}
               poster={slide.poster}
               muted
-              loop
+              loop={slide.loop !== false}
               playsinline
-              preload="metadata"
+              preload={i === 0 ? "auto" : "metadata"}
               aria-hidden="true"
               tabindex="-1"
             >
@@ -160,12 +197,13 @@ const rendered: Slide[] =
       ))
     }
 
-    <!-- Overlays sit above every slide so the wash never re-fades -->
+    <!-- Overlays sit above every slide so the wash never re-fades. They lift
+         while a clean slide is showing (see the [data-clean] rules below). -->
     <div
-      class="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/80 to-navy-950/30"
+      class="hero-wash absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/80 to-navy-950/30 transition-opacity duration-1000"
     >
     </div>
-    <div class="absolute inset-0 bg-navy-900/40 mix-blend-multiply"></div>
+    <div class="hero-wash absolute inset-0 bg-navy-900/40 mix-blend-multiply transition-opacity duration-1000"></div>
   </div>
 
   <!-- ===================== CAPTIONS ===================== -->
@@ -182,20 +220,26 @@ const rendered: Slide[] =
               data-caption={i}
               aria-hidden={i !== 0 ? "true" : undefined}
             >
-              {slide.eyebrow && (
-                <p class="eyebrow text-gold-400">{slide.eyebrow}</p>
-              )}
-              <h1 class="mt-7 font-display text-display-2xl font-light leading-[0.92] text-white">
-                {slide.title}
-                {slide.accent && (
-                  <> <span class="italic text-gold-400">{slide.accent}</span></>
-                )}
-                {slide.suffix && <> {slide.suffix}</>}
-              </h1>
-              {slide.body && (
-                <p class="mt-8 max-w-xl text-lg leading-relaxed text-white/75">
-                  {slide.body}
-                </p>
+              {/* A clean slide carries its own words in the picture. The
+                  wrapper stays so the grid keeps its height. */}
+              {!slide.clean && (
+                <>
+                  {slide.eyebrow && (
+                    <p class="eyebrow text-gold-400">{slide.eyebrow}</p>
+                  )}
+                  <h1 class="mt-7 font-display text-display-2xl font-light leading-[0.92] text-white">
+                    {slide.title}
+                    {slide.accent && (
+                      <> <span class="italic text-gold-400">{slide.accent}</span></>
+                    )}
+                    {slide.suffix && <> {slide.suffix}</>}
+                  </h1>
+                  {slide.body && (
+                    <p class="mt-8 max-w-xl text-lg leading-relaxed text-white/75">
+                      {slide.body}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           ))
@@ -203,7 +247,7 @@ const rendered: Slide[] =
       </div>
 
       <!-- CTAs stay put across slides so the buttons never jump -->
-      <div class="mt-11 flex flex-wrap items-center gap-4">
+      <div class="hero-ctas mt-11 flex flex-wrap items-center gap-4 transition-opacity duration-700">
         <a href="/live" class="btn-gold">
           <span class="relative flex h-2 w-2" aria-hidden="true">
             <span
@@ -391,6 +435,39 @@ const rendered: Slide[] =
     background-color: var(--color-gold-500);
   }
 
+  /* ---- A clean slide (the logo reveal) ------------------------------------
+     The script sets [data-clean] on the section while one is showing. The
+     navy wash lifts so the clip is seen as made; the CTA row steps aside for
+     its six seconds; and because the clip is white, the controls that are
+     normally white-on-navy switch to navy so they do not vanish. */
+  #hero[data-clean] .hero-wash {
+    opacity: 0;
+  }
+  #hero[data-clean] .hero-ctas {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #hero[data-clean] .hero-dot {
+    background-color: rgba(0, 24, 112, 0.3);
+  }
+  #hero[data-clean] .hero-dot[aria-selected="true"] {
+    background-color: var(--color-gold-600);
+  }
+  #hero[data-clean] #hero-prev,
+  #hero[data-clean] #hero-next,
+  #hero[data-clean] #hero-playpause {
+    color: var(--color-navy-900);
+    border-color: rgba(0, 24, 112, 0.25);
+  }
+
+  /* Before the first clean slide fades out, the section behind it is navy,
+     so the crossfade goes white -> navy -> next slide's wash. Match the
+     section to the clip so it goes straight to the next slide instead. */
+  #hero[data-clean] {
+    background-color: #fff;
+    transition: background-color 1000ms ease-out;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .hero-slide,
     .hero-caption {
@@ -409,11 +486,11 @@ const rendered: Slide[] =
       hero.querySelectorAll<HTMLElement>(".hero-caption"),
     );
     const dots = Array.from(hero.querySelectorAll<HTMLElement>(".hero-dot"));
-    // The video may sit on any slide now that slides come from the CMS, so
-    // find it rather than assuming it is the first.
-    const video = hero.querySelector<HTMLVideoElement>(".hero-video");
-    const videoSlideIndex = slides.findIndex((el) =>
-      el.querySelector(".hero-video"),
+    // More than one slide can be a video now (the logo reveal, then the
+    // welcome clip), so each slide keeps its own, and only the one on screen
+    // runs - decoding a clip behind another slide is wasted battery.
+    const videos = slides.map((el) =>
+      el.querySelector<HTMLVideoElement>(".hero-video"),
     );
     const prevBtn = document.getElementById("hero-prev");
     const nextBtn = document.getElementById("hero-next");
@@ -450,17 +527,28 @@ const rendered: Slide[] =
         el.setAttribute("aria-selected", String(i === index)),
       );
 
-      // Only run the video while its own slide is on screen — decoding it
-      // behind two other slides is wasted battery.
-      if (video && !saveData && !reduced.matches) {
-        if (index === videoSlideIndex) {
-          video.play().catch(() => {
+      // A clean slide lifts the navy wash and hides the caption and CTAs so
+      // the clip is seen as made. The attribute drives the CSS below. The
+      // same flag goes on <html> for the fixed header, which sits outside
+      // this section and would otherwise be white text on the white clip.
+      const clean = slides[index].dataset.clean === "true";
+      hero.toggleAttribute("data-clean", clean);
+      document.documentElement.toggleAttribute("data-hero-clean", clean);
+      window.dispatchEvent(new Event("hero:clean"));
+
+      videos.forEach((v, i) => {
+        if (!v) return;
+        if (i === index && !saveData && !reduced.matches) {
+          // Restart a non-looping clip so the reveal replays each time the
+          // slide comes round, rather than sitting on its last frame.
+          if (!v.loop) v.currentTime = 0;
+          v.play().catch(() => {
             /* autoplay refused; the poster stands in */
           });
         } else {
-          video.pause();
+          v.pause();
         }
-      }
+      });
     };
 
     const stop = () => {
