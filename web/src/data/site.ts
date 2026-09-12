@@ -93,6 +93,12 @@ export type NavItem = {
   label: string;
   href: string;
   children?: { label: string; href: string }[];
+  /**
+   * Leaves this site. Rendered with target="_blank" and an outward arrow so
+   * nobody is surprised to land somewhere else, and never marked as the
+   * current page.
+   */
+  external?: boolean;
 };
 
 export const nav: NavItem[] = [
@@ -112,6 +118,15 @@ export const nav: NavItem[] = [
   { label: "Sermons", href: "/sermons" },
   { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },
+  /**
+   * The Father's House Prints - the church bookshop. A separate site on a
+   * subdomain, sharing the Paystack account; see welm-paystack-golive.
+   */
+  {
+    label: "Bookstore",
+    href: "https://thefathershouseprints.kingdomofgods.org",
+    external: true,
+  },
   { label: "Contact", href: "/contact" },
 ];
 

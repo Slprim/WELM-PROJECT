@@ -126,15 +126,23 @@ const isActive = (href: string) =>
             ) : (
               <a
                 href={item.href}
-                aria-current={isActive(item.href) ? "page" : undefined}
+                aria-current={!item.external && isActive(item.href) ? "page" : undefined}
+                target={item.external ? "_blank" : undefined}
+                rel={item.external ? "noopener noreferrer" : undefined}
                 class:list={[
-                  "rounded-full px-4 py-2 text-sm font-medium transition",
-                  isActive(item.href)
+                  "inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition",
+                  !item.external && isActive(item.href)
                     ? "text-gold-400"
                     : "text-white/80 hover:text-white",
                 ]}
               >
                 {item.label}
+                {item.external && (
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" class="h-3 w-3 opacity-70" aria-hidden="true">
+                    <path d="M6 3h7v7M13 3 5 11" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                )}
+                {item.external && <span class="sr-only">(opens in a new tab)</span>}
               </a>
             ),
           )
@@ -212,14 +220,22 @@ const isActive = (href: string) =>
           <div class="border-b border-white/10 py-1">
             <a
               href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
               class:list={[
-                "block py-3 font-display text-2xl transition",
-                isActive(item.href)
+                "flex items-center gap-2 py-3 font-display text-2xl transition",
+                !item.external && isActive(item.href)
                   ? "text-gold-400"
                   : "text-white hover:text-gold-300",
               ]}
             >
               {item.label}
+              {item.external && (
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" class="h-4 w-4 opacity-60" aria-hidden="true">
+                  <path d="M6 3h7v7M13 3 5 11" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              )}
+              {item.external && <span class="sr-only">(opens in a new tab)</span>}
             </a>
             {item.children && (
               <div class="pb-3 pl-1">

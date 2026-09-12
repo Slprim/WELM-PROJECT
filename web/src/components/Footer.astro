@@ -46,8 +46,15 @@ const sundays = services.filter((s) => s.when.includes("Sunday"));
           {
             nav.map((item) => (
               <li>
-                <a href={item.href} class="transition hover:text-gold-400">
+                <a
+                  href={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
+                  class="transition hover:text-gold-400"
+                >
                   {item.label}
+                  {item.external && <span aria-hidden="true"> ↗</span>}
+                  {item.external && <span class="sr-only">(opens in a new tab)</span>}
                 </a>
               </li>
             ))
